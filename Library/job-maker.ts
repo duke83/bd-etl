@@ -2,7 +2,7 @@
 'use strict';
 var AWS = require('aws-sdk');
 import * as QDateModule from './QDate'
-var sqs = new AWS.SQS();
+var sqs = new AWS.SQS({region:"us-east-1"});
 
 export class JobMaker {
     constructor(s3Proxy, sqsProxy) {
@@ -14,21 +14,21 @@ export class JobMaker {
         function(err, data){
             if(err){console.log(err)}
             if(data){
-                //for(let i = 0; i < data.Contents.length; i++){
-                //    console.log(data.Contents[i].Key)
-                //}
-                console.log(sqs.getQueueUrl({
-                    QueueName: 'FDICFileJobs'
-                }))
-                sqs.sendMessage({
-                    MessageBody: 'send test message to SQS',
-                    QueueUrl:'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs',
-                    MessageAttributes:{someKey:{DataType}}
-                },
-                    function(err2, data2){
-                        if(err2){console.log(err2)}
-                        if(data2){console.log(data2)}
-                    })
+                for(let i = 0; i < data.Contents.length; i++){
+                    console.log(data.Contents[i].Key)
+                    sqs.sendMessage({
+                            MessageBody: data.Contents[i].Key,
+                            QueueUrl:'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs'//,
+                            //MessageAttributes:{someKey:{DataType:'String'}}
+                        },
+                        function(err2, data2){
+                            if(err2){console.log(err2)}
+                            if(data2){console.log(data2)}
+                        })
+                }
+                //console.log(sqs.getQueueUrl({
+                //    QueueName: 'FDICFileJobs'
+                //}))
             }
         })
     };
