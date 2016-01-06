@@ -1,15 +1,15 @@
 module.exports = function () {
     return {
         files: [
-            '!BankerDoodleETL/**/*.spec.ts',
-            '!BankerDoodleETL/**/*.spec.js',
-            'fdic-etl/**/*.ts',
-            'fdic-etl/**/*.js'
+            '!Library/**/*.spec.ts',
+            '!Library/**/*.spec.js',
+            'Library/**/*.ts',
+            'Library/**/*.js'
         ],
 
         tests: [
-            'BankerDoodleETL/**/*.spec.ts',
-            'BankerDoodleETL/**/*.spec.js'
+            'Library/**/*.spec.ts',
+            'Library/**/*.spec.js'
         ],
         env: {
             type: 'node'

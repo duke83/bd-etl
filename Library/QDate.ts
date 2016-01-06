@@ -1,7 +1,8 @@
+'use strict';
 export class QDate {
 
     private _year:number;
-    private _quarter:number
+    private _quarter:number;
     private _isValid:boolean;
     public details:Array<string> = [];
 

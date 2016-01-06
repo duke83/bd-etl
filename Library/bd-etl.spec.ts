@@ -1,21 +1,23 @@
 /// <reference path="../typings/jasmine.d.ts" />
+/// <reference path="../typings/node.d.ts" />
 
 
-var BankerDoodleEtl = require('./BankerDoodleEtl.js').BankerDoodleEtl;
-console.log(BankerDoodleEtl);
-describe('bankderdoodleETL',function(){
-    var bankerDoodleEtl;
+var BdEtlModule = require('./bd-etl.js');
+console.log(BdEtlModule);
+describe('bd-etl',function(){
+    var bdEtl;
     beforeEach(function(){
-        bankerDoodleEtl = new BankerDoodleEtl();
-        console.log(bankerDoodleEtl)
-        var cow = bankerDoodleEtl;
+        var bdEtlClass=BdEtlModule.BdEtl;
+        console.log(bdEtlClass)
+        bdEtl = new bdEtlClass();
+        console.log(bdEtl)
 
-        console.log(cow.makeFdicFileJobs())
     })
     it('should be defined',function(){
-        expect(bankerDoodleEtl).toBeDefined();
+        expect(bdEtl).toBeDefined();
     })
     it('should have a MakeFdicFileJobs method',function(){
-        expect(bankerDoodleEtl.makeFdicFileJobs).toBeDefined();
+        expect(bdEtl.makeFdicFileJobs).toBeDefined();
+        console.log(bdEtl.makeFdicFileJobs())
     })
 })

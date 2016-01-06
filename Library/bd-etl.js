@@ -1,16 +1,15 @@
 'use strict';
 var FdicFileJobMakerModule = require("./job-maker");
 console.log(FdicFileJobMakerModule);
-var BankerDoodleEtl = (function () {
+class BdEtl {
     //FdicFileJobMaker = FdicFileJobMaker;
-    function BankerDoodleEtl(fdicFleJobsSqs) {
+    constructor(fdicFleJobsSqs) {
     }
     ;
-    BankerDoodleEtl.prototype.makeFdicFileJobs = function () {
-        var maker = new FdicFileJobMakerModule.FdicFileJobMaker();
-        return maker.make();
-    };
-    return BankerDoodleEtl;
-})();
-exports.BankerDoodleEtl = BankerDoodleEtl;
+    makeFdicFileJobs() {
+        //var maker = new FdicFileJobMakerModule.JobMaker()
+        return 'maker.make()';
+    }
+}
+exports.BdEtl = BdEtl;
 //# sourceMappingURL=bd-etl.js.map
