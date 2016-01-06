@@ -1,6 +1,8 @@
 /// <reference path="../typings/node.d.ts" />
 'use strict';
+var AWS = require('aws-sdk');
 var QDateModule = require('./QDate');
+var sqs = new AWS.SQS();
 class JobMaker {
     constructor(s3Proxy, sqsProxy) {
         var qd = new QDateModule.QDate(2012, 1);
@@ -12,9 +14,24 @@ class JobMaker {
                 console.log(err);
             }
             if (data) {
-                for (let i = 0; i < data.Contents.length; i++) {
-                    console.log(data.Contents[i].Key);
-                }
+                //for(let i = 0; i < data.Contents.length; i++){
+                //    console.log(data.Contents[i].Key)
+                //}
+                console.log(sqs.getQueueUrl({
+                    QueueName: 'FDICFileJobs'
+                }));
+                sqs.sendMessage({
+                    MessageBody: 'send test message to SQS',
+                    QueueUrl: 'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs',
+                    MessageAttributes: { someKey: { DataType } }
+                }, function (err2, data2) {
+                    if (err2) {
+                        console.log(err2);
+                    }
+                    if (data2) {
+                        console.log(data2);
+                    }
+                });
             }
         });
     }
@@ -25,6 +42,12 @@ class JobMaker {
     }
 }
 exports.JobMaker = JobMaker;
+//var sqsParams = {
+//    MessageBody: data.Contents[i].Key,
+//    QueueUrl:sqs.getQueueUrl({
+//        QueueName: 'FDICFileJobs'
+//})
+//}
 // THIS IS THE CLIENT PORTION
 //JOB-MAKER REQUIRES PROXIES FOR S3 AND SQS
 var AWS = require('aws-sdk');
