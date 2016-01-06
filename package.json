@@ -1,0 +1,14 @@
+{
+  "name": "bankerdoodle-etl",
+  "version": "1.0.0",
+  "description": "Container module for all bankerdoodle ETL processes",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Kent Merrell",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine": "^2.4.1"
+  }
+}

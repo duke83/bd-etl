@@ -1,0 +1,19 @@
+{
+  "name": "bd-static-sweb",
+  "version": "1.0.0",
+  "description": "BankerDoodle Static Web",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "connect": "^3.4.0",
+    "connect-inject": "^0.4.0",
+    "gulp": "^3.9.0",
+    "gulp-inject": "^3.0.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-sass": "^2.0.4"
+  }
+}

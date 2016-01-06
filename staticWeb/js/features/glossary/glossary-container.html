@@ -1,0 +1,29 @@
+<span class="glossary-container">
+    <span class="glossary-container-titleline">
+        <span class="glossary-container-title">Glossary</span>
+
+        <input type="text"
+               ng-model="vm.searchparam"
+                ng-change="vm.updateGlossary()">
+        <i class="fa fa-cog glossary-show-search-controlls-icon"
+           ng-click="vm.showSearchControlsContainer=!vm.showSearchControlsContainer"></i>
+
+        <span class="glossary-search-controls-container" ng-show="vm.showSearchControlsContainer">
+        <label for="searchVarName">Variable Name</label>
+            <input type="radio" id="searchVarName"
+                   value="varname"
+                   ng-model="vm.searchNameOrShort"
+                   name="searchNameOrShort" />
+        <label for="searchDescription">Short Description</label>
+            <input type="radio" id="searchDescription"
+                   value="shortdescription"
+                   ng-model="vm.searchNameOrShort"
+                   name="searchNameOrShort"/>
+</span>
+    </span>
+
+
+
+    <glossary-item ng-repeat="itm in vm.items" itm="itm"></glossary-item>
+
+</span>

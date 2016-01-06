@@ -1,0 +1,78 @@
+.glossary-container{
+    padding:1rem;
+    background-color: lightseagreen;
+    display:block;
+}
+.glossary-container-titleline{
+    display:block;
+    color:white;
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', arial, sans-serif;
+    margin-bottom:1rem;
+}
+
+.glossary-container-title{
+    color:white;
+    display:inline-block;
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', arial, sans-serif;
+    font-size:larger;
+    opacity: 20;
+}
+.glossary-show-search-controlls-icon{
+    margin-left:.15rem;
+    color:darkolivegreen;
+}
+.glossary-search-controls-container{
+    font-size:smaller;
+}
+glossary-item{
+    display: block;
+
+    padding:.25rem;
+}
+.glossary-item-varname{
+    color: white;
+    margin-right:.3rem;
+    cursor:pointer;
+}
+
+.glossary-item-shortdescription{
+    font-size: smaller;
+    color: #246e54;
+}
+.glossary-item-details-container{
+    display:block;
+    border: solid #246e54 1px;
+    margin:.25rem;
+    font-size:smaller;
+    padding-right:.4rem;
+    color: #246e54;
+    background-color: #25ccc2;
+
+}
+
+
+.glossary-item-details-container li{
+    -webkit-margin-before: .51rem;
+}
+.glossary-item-longdescription{
+
+    max-height:4rem;
+    overflow:scroll;
+
+}
+.glossary-item-src{
+
+}
+
+.visualization-sample-data-notice{
+    text-align: center;
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(50%);
+    -o-transform: translateY(50%);
+    transform: translateY(-50px);
+}
+
+.visualization-varname{
+    font-size:1rem;
+}
