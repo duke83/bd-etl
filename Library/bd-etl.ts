@@ -1,14 +1,48 @@
 'use strict';
 import *  as FdicFileJobMakerModule from "./job-maker";
-console.log(FdicFileJobMakerModule);
-export class BdEtl {
-    //FdicFileJobMaker = FdicFileJobMaker;
+import * as TablePreparerModule from "./table-preparer"
 
-    constructor(fdicFleJobsSqs:any) {
+var AWS = require("aws-sdk");
+
+
+
+export class BdETL {
+    //FdicFileJobMaker = FdicFileJobMaker;
+    private _s3;
+    private _sqs;
+    private _dynamoDocClient; //http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html
+    private _currentFileName=null;
+
+    constructor(config) {
+        this._s3 = new AWS.S3(config.s3Config);
+        this._sqs = new AWS.SQS(config.sqsConfig);
+        this._dynamoDocClient = new AWS.DynamoDB.DocumentClient(config.dynamodbConfig)
     };
 
-    makeFdicFileJobs(){
+    makeFdicFileJobs() {
         //var maker = new FdicFileJobMakerModule.JobMaker()
         return 'maker.make()';
+    }
+
+    processFiles(){
+        while(this.getNextFile()){
+            this.processFile();
+        }
+    }
+    getNextFile(){
+        switch(this._currentFileName){
+            case null:
+                this._currentFileName ='file1.csv';
+                return true;
+            case 'file1.csv':
+                this._currentFileName ='file2.csv';
+                return true;
+
+        }
+        return false;
+    }
+    processFile(){
+        let tablePreparer = new
+        console.log(this._currentFileName);
     }
 }

@@ -1,1 +1,1 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["index.ts"],"names":["bankerdoodleETL","bankerdoodleETL.constructor"],"mappings":"AAEA;IAAAA;IAEAC,CAACA;IAADD,sBAACA;AAADA,CAACA,AAFD,IAEC;AAFY,uBAAe,kBAE3B,CAAA"}
+{"version":3,"file":"index.js","sourceRoot":"","sources":["index.ts"],"names":["bankerdoodleETL"],"mappings":"AAEA;AAEAA,CAACA;AAFY,uBAAe,kBAE3B,CAAA"}
