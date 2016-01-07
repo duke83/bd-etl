@@ -15,7 +15,7 @@ export class JobMaker {
             if(err){console.log(err)}
             if(data){
                 for(let i = 0; i < data.Contents.length; i++){
-                    console.log(data.Contents[i].Key)
+                    console.log(data.Contents[i].Key);
                     sqs.sendMessage({
                             MessageBody: data.Contents[i].Key,
                             QueueUrl:'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs'//,

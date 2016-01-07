@@ -47,6 +47,27 @@ class QDate {
     get isValid() {
         return this._isValid;
     }
+    static getQDateFromFileName(filename) {
+        //filename should be something like:
+        //All_Reports_20131231_Net+Loans+and+Leases.csv
+        var year = parseInt(filename.substring(12, 16));
+        var qrtr = QDate.getQuarterFromDateString(filename.substring(16, 20));
+        return new QDate(year, qrtr);
+    }
+    static getQuarterFromDateString(datestring) {
+        //datstring should b something like '1231'
+        switch (datestring) {
+            case '0331':
+                return 1;
+            case '0630':
+                return 2;
+            case '0930':
+                return 3;
+            case '1231':
+                return 4;
+        }
+        return null;
+    }
     getNext() {
         var newQuarter;
         var newYear;

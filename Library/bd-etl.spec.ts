@@ -2,7 +2,7 @@
 /// <reference path="../typings/node.d.ts" />
 var config = require( "./config.js" );
 //var c = new config()
-console.log(config)
+//console.log(config)
 
 
 

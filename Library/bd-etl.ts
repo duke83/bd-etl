@@ -3,7 +3,8 @@ import *  as FdicFileJobMakerModule from "./job-maker";
 import * as TablePreparerModule from "./table-preparer"
 
 var AWS = require("aws-sdk");
-
+var EventEmitter = require('events');
+var emitter = new EventEmitter();
 
 
 export class BdETL {
@@ -32,17 +33,17 @@ export class BdETL {
     getNextFile(){
         switch(this._currentFileName){
             case null:
-                this._currentFileName ='file1.csv';
+                this._currentFileName ='All_Reports_20131231_Net+Loans+and+Leases.csv';
                 return true;
             case 'file1.csv':
-                this._currentFileName ='file2.csv';
+                this._currentFileName ='All_Reports_20111231_Net+Loans+and+Leases.csv';
                 return true;
 
         }
         return false;
     }
     processFile(){
-        let tablePreparer = new
+        let tablePreparer = new TablePreparerModule.TablePreparer(this._currentFileName, emitter);
         console.log(this._currentFileName);
     }
 }

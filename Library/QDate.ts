@@ -35,11 +35,34 @@ export class QDate {
         return this._year.toString() + rtrnQtr
     }
 
+
     public get isValid():boolean {
         return this._isValid;
 
     }
 
+    public static getQDateFromFileName(filename:string):QDate {
+        //filename should be something like:
+        //All_Reports_20131231_Net+Loans+and+Leases.csv
+        var year = parseInt(filename.substring(12,16));
+        var qrtr = QDate.getQuarterFromDateString(filename.substring(16,20))
+        return new QDate(year, qrtr)
+    }
+
+    public static getQuarterFromDateString(datestring){
+        //datstring should b something like '1231'
+        switch(datestring){
+            case '0331':
+                return 1;
+            case '0630':
+                return 2;
+            case '0930':
+                return 3;
+            case '1231':
+                return 4;
+        }
+        return null;
+    }
     public  getNext():QDate {
         var newQuarter:number;
         var newYear:number;
@@ -54,8 +77,9 @@ export class QDate {
         return new QDate(newYear, newQuarter)
     }
 
+
     constructor(year:number, quarter:number) {
-        this._isValid=true;
+        this._isValid = true;
         //validate inputs
         const regexYear = /^[0-9]{4}$/;
         if (!regexYear.test(year.toString())) {
