@@ -1,7 +1,19 @@
 /// <reference path="../typings/node.d.ts" />
 'use strict';
 import {QDate} from "./QDate";
-
+var config = require("./config.js");
+var AWS = require('aws-sdk');
+var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
+//var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
+var docClient=new AWS.DynamoDB.DocumentClient(dynamodb);
+var params = {
+    TableName: 'FDIC-1992-12-31-ALPHA' /* required */
+};
+dynamodb.describeTable(params, function(err, data) {
+    if (err) console.log(err, err.stack); // an error occurred
+    else     console.log(data);           // successful response
+});
+//console.log(docClient);
 
 export class TablePreparer {
     private _filename;
@@ -11,7 +23,7 @@ export class TablePreparer {
     private _dynamoAlphaReadyToWrite = false;
     private _dynamoNumericReadyToWrite = false;
     private _emitter;
-    private _secondsForTimeout = 60;
+    private _secondsForTimeout = 10;
 //    _emitter.on('table-exists', function (data) {
 //    console.log('table exists!', data)
 //})
@@ -23,18 +35,23 @@ export class TablePreparer {
         this._dynamoTableNameAlpha = 'FDIC-' + datestring.substring(0, 4) + '-' + datestring.substring(4, 6) + '-' + datestring.substring(6, 8) + '-ALPHA';
         this._dynamoTableNameNumeric = 'FDIC-' + datestring.substring(0, 4) + '-' + datestring.substring(4, 6) + '-' + datestring.substring(6, 8) + '-NUM';
         this._emitter = emitter;
-        this.buildAlphaTable(this._dynamoTableNameAlpha,function(err,data){
-            if(data){
+        this.buildAlphaTable(this._dynamoTableNameAlpha, function (err, data) {
+            if (data) {
+                console.log(data)
+            }
+        });
+        this.buildNumericTable(this._dynamoTableNameAlpha, function (err, data) {
+            if (data) {
                 console.log(data)
             }
         });
     }
 
-    public buildAlphaTable(tablename:string,cb) {
+    public buildAlphaTable(tablename:string, cb) {
         let startTime = Date.now();
-        let alphaTableExits = false;
-        let alphaTableSchemaOk = false;
-        let alphaTableReady = false;
+        let tableExits = false;
+        let tableSchemaOk = false;
+        let tableReady = false;
 
         this._emitter.emit('testevent', this._qdate.string);
 
@@ -45,15 +62,20 @@ export class TablePreparer {
         //create new table if needed
 
         //poll for everything to be complete
-        var interval1=setInterval(function (emitter,tablename,secondsForTimeout) {
-            var elapsedTime=Date.now() - startTime
-            console.log('interval', elapsedTime/1000);
-            if (elapsedTime/1000>=secondsForTimeout) {
-                emitter.emit('testeventxxx', tablename);
-                clearInterval(interval1);
-                cb(null,true);
+        let intervalTableExists = setInterval(function (emitter, tablename, secondsForTimeout) {
+            var elapsedTime = Date.now() - startTime;
+            console.log('interval', elapsedTime / 1000);
+            if (elapsedTime / 1000 >= secondsForTimeout) {
+
+                clearInterval(intervalTableExists);
+                cb(null, false);
             }
-        }, 5000,this._emitter,tablename,this._secondsForTimeout);
+            if (tableExits && tableSchemaOk && tableReady) {
+                clearInterval(intervalTableExists);
+                cb(null, true);
+                emitter.emit('testeventxxx', tablename);
+            }
+        }, 5000, this._emitter, tablename, this._secondsForTimeout);
     }
 
 

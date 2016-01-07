@@ -1,6 +1,21 @@
 /// <reference path="../typings/node.d.ts" />
 'use strict';
 var QDate_1 = require("./QDate");
+var config = require("./config.js");
+var AWS = require('aws-sdk');
+var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
+//var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
+var docClient = new AWS.DynamoDB.DocumentClient(dynamodb);
+var params = {
+    TableName: 'FDIC-1992-12-31-ALPHA' /* required */
+};
+dynamodb.describeTable(params, function (err, data) {
+    if (err)
+        console.log(err, err.stack); // an error occurred
+    else
+        console.log(data); // successful response
+});
+//console.log(docClient);
 class TablePreparer {
     //    _emitter.on('table-exists', function (data) {
     //    console.log('table exists!', data)
@@ -8,7 +23,7 @@ class TablePreparer {
     constructor(filename, emitter) {
         this._dynamoAlphaReadyToWrite = false;
         this._dynamoNumericReadyToWrite = false;
-        this._secondsForTimeout = 60;
+        this._secondsForTimeout = 10;
         this._filename = filename;
         this._qdate = QDate_1.QDate.getQDateFromFileName(filename);
         var datestring = this._qdate.string;
@@ -20,24 +35,33 @@ class TablePreparer {
                 console.log(data);
             }
         });
+        this.buildNumericTable(this._dynamoTableNameAlpha, function (err, data) {
+            if (data) {
+                console.log(data);
+            }
+        });
     }
     buildAlphaTable(tablename, cb) {
         let startTime = Date.now();
-        let alphaTableExits = false;
-        let alphaTableSchemaOk = false;
-        let alphaTableReady = false;
+        let tableExits = false;
+        let tableSchemaOk = false;
+        let tableReady = false;
         this._emitter.emit('testevent', this._qdate.string);
         //get schema for table
         //check schema properties to insure it is what we need
         //create new table if needed
         //poll for everything to be complete
-        var interval1 = setInterval(function (emitter, tablename, secondsForTimeout) {
+        let intervalTableExists = setInterval(function (emitter, tablename, secondsForTimeout) {
             var elapsedTime = Date.now() - startTime;
             console.log('interval', elapsedTime / 1000);
             if (elapsedTime / 1000 >= secondsForTimeout) {
-                emitter.emit('testeventxxx', tablename);
-                clearInterval(interval1);
+                clearInterval(intervalTableExists);
+                cb(null, false);
+            }
+            if (tableExits && tableSchemaOk && tableReady) {
+                clearInterval(intervalTableExists);
                 cb(null, true);
+                emitter.emit('testeventxxx', tablename);
             }
         }, 5000, this._emitter, tablename, this._secondsForTimeout);
     }
