@@ -9,6 +9,7 @@
   "author": "Kent Merrell",
   "license": "ISC",
   "devDependencies": {
+    "csv-parse": "^1.0.1",
     "jasmine": "^2.4.1",
     "typescript": "^1.7.5"
   }
