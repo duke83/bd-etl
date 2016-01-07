@@ -20,4 +20,4 @@ describe('bd-etl', function () {
         //console.log(bdETL.makeFdicFileJobs())
     });
 });
-//# sourceMappingURL=bd-ETL.spec.js.map
+//# sourceMappingURL=bd-etl.spec.js.map
