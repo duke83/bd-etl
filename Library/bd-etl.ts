@@ -4,7 +4,7 @@ import * as TablePreparerModule from "./table-preparer"
 
 var AWS = require("aws-sdk");
 var EventEmitter = require('events');
-var emitter = new EventEmitter();
+//var emitter = new EventEmitter();
 
 
 export class BdETL {
@@ -13,6 +13,7 @@ export class BdETL {
     private _sqs;
     private _dynamoDocClient; //http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html
     private _currentFileName=null;
+    private _emitter=new EventEmitter();
 
     constructor(config) {
         this._s3 = new AWS.S3(config.s3Config);
@@ -43,7 +44,18 @@ export class BdETL {
         return false;
     }
     processFile(){
-        let tablePreparer = new TablePreparerModule.TablePreparer(this._currentFileName, emitter);
+        let tablePreparer = new TablePreparerModule.TablePreparer(this._currentFileName);
+        tablePreparer.prepareTables(function(data){
+            if(data=='ready'){
+                this._emitter.emit('tables-are-ready')
+            }
+        });
         console.log(this._currentFileName);
+        this._emitter.on('tables-are-ready',function(){
+
+        })
+
     }
+
+
 }
