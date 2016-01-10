@@ -72,6 +72,7 @@ function quarterIsBeingProcessed(qdate, cb) {
         ;
     });
 }
+exports.quarterIsBeingProcessed = quarterIsBeingProcessed;
 // When creating tables with secondary indexes, only one can be
 // in 'creating' state at any given time. (http://docs.aws.amazon.com/awsjavascriptsdk/latest/aws/dynamodb.html#createtable-property)
 // Additionally, The number of concurrent table requests (cumulative number of tables in the CREATING, DELETING or UPDATING state) exceeds the maximum allowed of 10.
@@ -91,6 +92,7 @@ function tableUpdate_start(tablename, tablestatus) {
             console.log(data);
     });
 }
+exports.tableUpdate_start = tableUpdate_start;
 function tableUpdate_complete(tablename, tablestatus) {
     var params = {
         Key: {
@@ -106,6 +108,7 @@ function tableUpdate_complete(tablename, tablestatus) {
             console.log(data);
     });
 }
+exports.tableUpdate_complete = tableUpdate_complete;
 function tablesCreating_count() {
     var params = {
         TableName: 'bd-etl-table-status',
@@ -122,6 +125,7 @@ function tablesCreating_count() {
         console.log(data.Count);
     });
 }
+exports.tablesCreating_count = tablesCreating_count;
 function tablesInProcss_count(cb) {
     var params = {
         TableName: 'bd-etl-table-status',
@@ -143,6 +147,7 @@ class ProcessState {
 }
 ProcessState.startingToProcess = new ProcessState('startingToProcess');
 ProcessState.finishedProcessing = new ProcessState('finishedProcessing');
+exports.ProcessState = ProcessState;
 class TableState {
     constructor(value) {
         this.value = value;
@@ -154,6 +159,7 @@ class TableState {
 TableState.CREATING = new ProcessState('CREATING');
 TableState.DELETING = new ProcessState('DELETING');
 TableState.UPDATING = new ProcessState('UPDATING');
+exports.TableState = TableState;
 //console.log(new Date())
 //updateProcessingState('20121231','def.csv',ProcessState.finishedProcessing);
 //console.log(config.dynamodbConfig())

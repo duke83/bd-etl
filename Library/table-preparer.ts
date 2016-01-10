@@ -6,12 +6,8 @@ var AWS = require('aws-sdk');
 var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
 //var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
 var docClient = new AWS.DynamoDB.DocumentClient(dynamodb);
-var etlState=require('./bd-etl-state.js')
-//console.log(etlState);
+var etlState=require('./bd-etl-state.js');
 
-etlState.tablesInProcss_count(function(data){
-    console.log(data)
-})
 
 export class TablePreparer {
     private _filename;
@@ -106,8 +102,9 @@ class TableBuilder {
     private _tableState;
     private _table_type:TableType;
     private _table_name;
+    private _writeCapcity:number;
     private _alpha_schema = {
-        "Table": {
+
             "AttributeDefinitions": [{"AttributeName": "cert", "AttributeType": "N"}, {
                 "AttributeName": "ddval",
                 "AttributeType": "S"
@@ -117,7 +114,7 @@ class TableBuilder {
                 "AttributeName": "cert",
                 "KeyType": "RANGE"
             }],
-            "ProvisionedThroughput": {"NumberOfDecreasesToday": 0, "ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapcity},
             "LocalSecondaryIndexes": [{
                 "IndexName": "ddval-index",
                 "KeySchema": [{"AttributeName": "varname", "KeyType": "HASH"}, {
@@ -126,10 +123,9 @@ class TableBuilder {
                 }],
                 "Projection": {"ProjectionType": "ALL"},
             }]
-        }
+
     };
-    private  _numeric_schema = {
-        "Table": {
+    private _numeric_schema = {
             "AttributeDefinitions": [{
                 "AttributeName": "cert",
                 "AttributeType": "N"
@@ -142,7 +138,7 @@ class TableBuilder {
                 "AttributeName": "cert",
                 "KeyType": "RANGE"
             }],
-            "ProvisionedThroughput": {"NumberOfDecreasesToday": 0, "ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapcity},
             "LocalSecondaryIndexes": [{
                 "IndexName": "ddval-index",
                 "KeySchema": [{"AttributeName": "varname", "KeyType": "HASH"}, {
@@ -151,15 +147,15 @@ class TableBuilder {
                 }],
                 "Projection": {"ProjectionType": "ALL"},
             }]
-        }
     };
 
 
-    constructor(tablename:string, tableType:TableType) {
+    constructor(tablename:string, tableType:TableType, writeCapacity:number) {
         // TABLESTATE OBJECT IS NECESSARY BECAUSE THE INTERVAL LOOP LOSES REFERENCE
         // TO THE CLASS METHODS AND PROPERTIES
         this._table_name = tablename;
         this._table_type = tableType;
+        this._writeCapcity=writeCapacity;
         this._tableState = {
             tableType: tableType,
             startTime: Date.now(),
@@ -240,13 +236,22 @@ class TableBuilder {
         return;
     }
 
-    private createTable_alpha(tablename,cb) {
+    public createTable_alpha(tablename,cb) {
+        var params=this._alpha_schema;
+        dynamodb.createTable(params, function(err, data) {
+            if (err) {console.log(err, err.stack);
+            cb(err)
+            }// an error occurred
+            else  {
+                cb(data);
+                console.log(data);}           // successful response
+        });
         //Only one table with secondary indexes can be in the CREATING state at any given time.
         console.log('creating alpha talbe ', tablename)
         //this._alpha_schema
     }
 
-    private createTable_numeric(tablename,cb) {
+    public createTable_numeric(tablename,cb) {
         //Only one table with secondary indexes can be in the CREATING state at any given time.
         console.log('creating numeric table ', tablename)
     }
@@ -282,7 +287,65 @@ class TableType {
 }
 
 
-var filename = 'All_Reports_20121231_Net+Loans+and+Leases.csv';
+
+
+
+
+var startime = Date.now();
+
+function createTable_alpha(tablename, writeCapacity){
+    var params  = {
+
+            "AttributeDefinitions": [{"AttributeName": "cert", "AttributeType": "N"}, {
+                "AttributeName": "ddval",
+                "AttributeType": "S"
+            }, {"AttributeName": "varname", "AttributeType": "S"}],
+            "TableName": tablename,
+            "KeySchema": [{"AttributeName": "varname", "KeyType": "HASH"}, {
+                "AttributeName": "cert",
+                "KeyType": "RANGE"
+            }],
+            "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": writeCapacity},
+            "LocalSecondaryIndexes": [{
+                "IndexName": "ddval-index",
+                "KeySchema": [{"AttributeName": "varname", "KeyType": "HASH"}, {
+                    "AttributeName": "ddval",
+                    "KeyType": "RANGE"
+                }],
+                "Projection": {"ProjectionType": "ALL"},
+            }]
+
+    };
+    dynamodb.createTable(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(data);           // successful response
+    });
+}
+
+
+function describet(tablename) {
+    var params = {
+        TableName: tablename
+    };
+
+    dynamodb.describeTable(params, function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+
+        // successful response
+        else {
+            //check attributes on data object
+            console.log(data);
+        }
+    });
+
+}
+
+var tablename = 'Aaaxxxxx1';
+//createTable_alpha(tablename,1000);
+describet(tablename)
+
+
+dynamodb.des
 //var tp = new TablePreparer(filename);
 //tp.prepareTables(function (data) {
 //    console.log(data)

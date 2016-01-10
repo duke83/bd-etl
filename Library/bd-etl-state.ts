@@ -47,7 +47,7 @@ export function updateProcessingState(qdate:string, filename:string, processStat
     })
 }
 
-function quarterIsBeingProcessed(qdate:string, cb) {
+export function quarterIsBeingProcessed(qdate:string, cb) {
     var params = {
         TableName: 'bd-etl-state',
         KeyConditions: {
@@ -81,7 +81,7 @@ function quarterIsBeingProcessed(qdate:string, cb) {
 // in 'creating' state at any given time. (http://docs.aws.amazon.com/awsjavascriptsdk/latest/aws/dynamodb.html#createtable-property)
 // Additionally, The number of concurrent table requests (cumulative number of tables in the CREATING, DELETING or UPDATING state) exceeds the maximum allowed of 10.
 // (http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html)
-function tableUpdate_start(tablename, tablestatus:TableState) {
+export function tableUpdate_start(tablename, tablestatus:TableState) {
     var params = {
         TableName: 'bd-etl-table-status',
         Item: {
@@ -95,7 +95,7 @@ function tableUpdate_start(tablename, tablestatus:TableState) {
     })
 }
 
-function tableUpdate_complete(tablename, tablestatus:TableState) {
+export function tableUpdate_complete(tablename, tablestatus:TableState) {
     var params = {
         Key: {
             tableStatus: tablestatus.toString(),
@@ -109,7 +109,7 @@ function tableUpdate_complete(tablename, tablestatus:TableState) {
     })
 }
 
-function tablesCreating_count() {
+export function tablesCreating_count() {
     var params = {
         TableName: 'bd-etl-table-status',
         KeyConditions: {
@@ -137,7 +137,7 @@ export function tablesInProcss_count(cb) {
     });
 }
 
-class ProcessState {
+export class ProcessState {
     constructor(public value:string) {
     }
 
@@ -149,7 +149,7 @@ class ProcessState {
     static finishedProcessing = new ProcessState('finishedProcessing');
 }
 
-class TableState {
+export class TableState {
     constructor(public value:string) {
     }
 
