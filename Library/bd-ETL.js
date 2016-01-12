@@ -4,12 +4,25 @@ var AWS = require("aws-sdk");
 var EventEmitter = require('events');
 //var emitter = new EventEmitter();
 class BdETL {
-    constructor(config) {
+    constructor() {
         this._currentFileName = null;
         this._emitter = new EventEmitter();
-        this._s3 = new AWS.S3(config.s3Config);
-        this._sqs = new AWS.SQS(config.sqsConfig);
-        this._dynamoDocClient = new AWS.DynamoDB.DocumentClient(config.dynamodbConfig);
+        this.files = [
+            { filename: 'All_Reports_20141231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20131231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20121231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20111231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20101231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20091231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20081231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20071231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20061231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20051231_Net+Loans+and+Leases.csv', recordCount: 40 },
+            { filename: 'All_Reports_20041231_Net+Loans+and+Leases.csv', recordCount: 40 }
+        ];
+        // this._s3 = new AWS.S3(config.s3Config);
+        // this._sqs = new AWS.SQS(config.sqsConfig);
+        // this._dynamoDocClient = new AWS.DynamoDB.DocumentClient(config.dynamodbConfig)
     }
     ;
     makeFdicFileJobs() {
@@ -17,32 +30,31 @@ class BdETL {
         return 'maker.make()';
     }
     processFiles() {
-        while (this.getNextFile()) {
-            this.processFile();
+        var func = this.processFile;
+        for (var i = 0; i < this.files.length; i++) {
+            let fname = this.files[i].filename;
+            setTimeout(function () {
+                func(fname);
+            }, 0); //this encompasses many asynchronous calls. The loop continues
         }
     }
     getNextFile() {
-        switch (this._currentFileName) {
-            case null:
-                this._currentFileName = 'All_Reports_20131231_Net+Loans+and+Leases.csv';
-                return true;
-            case 'file1.csv':
-                this._currentFileName = 'All_Reports_20111231_Net+Loans+and+Leases.csv';
-                return true;
-        }
-        return false;
+        //console.log(this.files[11])
+        var rtrn = this.files[this.files.length - 1].filename;
+        this.files.pop();
+        return rtrn;
     }
-    processFile() {
-        let tablePreparer = new TablePreparerModule.TablePreparer(this._currentFileName);
+    processFile(filename) {
+        let tablePreparer = new TablePreparerModule.TablePreparer(filename, 1);
+        //var emmiter = this._emitter
         tablePreparer.prepareTables(function (data) {
             if (data == 'ready') {
-                this._emitter.emit('tables-are-ready');
+                console.log('tables-are-ready', filename);
             }
-        });
-        console.log(this._currentFileName);
-        this._emitter.on('tables-are-ready', function () {
         });
     }
 }
 exports.BdETL = BdETL;
+var etl = new BdETL();
+etl.processFiles();
 //# sourceMappingURL=bd-ETL.js.map

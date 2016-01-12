@@ -7,11 +7,14 @@ var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
 //var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
 var docClient = new AWS.DynamoDB.DocumentClient(dynamodb);
 var etlState = require('./bd-etl-state.js');
+var async = require('async');
 class TablePreparer {
-    constructor(filename) {
+    constructor(filename, writeCapacity) {
         this._alpha_build_complete = false;
         this._numeric_build_complete = false;
+        this._write_capacity = 1;
         this._filename = filename;
+        this._write_capacity = writeCapacity ? writeCapacity : 1;
         this._qdate = QDate_1.QDate.getQDateFromFileName(filename);
         var datestring = this._qdate.string;
         this._alpha_table_name = 'FDIC-' + datestring.substring(0, 4) + '-' + datestring.substring(4, 6) + '-' + datestring.substring(6, 8) + '-ALPHA';
@@ -20,26 +23,20 @@ class TablePreparer {
     prepareTables(cb) {
         let startTime = Date.now();
         let secondsToTimeout = 20;
-        let alpha_maximize_complete = false;
-        let numeric_maximize_complete = false;
+        let alpha_complete = false;
+        let numeric_complete = false;
         //ALPHA TABLE BUILD
-        let tb_alpha = new TableBuilder(this._alpha_table_name, TableType.alpha);
+        let tb_alpha = new TableBuilder(this._alpha_table_name, TableType.alpha, this._write_capacity);
         tb_alpha.build(function (data) {
-            console.log('tb_alpha.build returned data', data);
             if (data) {
-                tb_alpha.maximize(function (data) {
-                    alpha_maximize_complete = data;
-                });
+                alpha_complete = true;
             }
         });
         //NUMERIC TABLE BUILD
-        let tb_numeric = new TableBuilder(this._numeric_table_name, TableType.numeric);
+        let tb_numeric = new TableBuilder(this._numeric_table_name, TableType.numeric, this._write_capacity);
         tb_numeric.build(function (data) {
-            console.log('tb_numeric.build returned data', data);
             if (data) {
-                tb_numeric.maximize(function (data) {
-                    numeric_maximize_complete = data;
-                });
+                numeric_complete = true;
             }
         });
         //START POLLING
@@ -47,15 +44,19 @@ class TablePreparer {
             var elapsedTime = Date.now() - startTime;
             console.log('interval_mainLoop', elapsedTime / 1000);
             //HAPPY PATH
-            if (alpha_maximize_complete && numeric_maximize_complete) {
+            if (alpha_complete && numeric_complete) {
+                console.log('happy path has been reached. Now cb(ready)');
+                clearInterval(interval_mainLoop);
                 cb('ready');
+                return;
             }
             //TIMEOUT LIMIT IS REACHED
             if (elapsedTime / 1000 >= secondsToTimeout) {
                 clearInterval(interval_mainLoop);
+                cb(false);
                 return;
             }
-        }, 10000);
+        }, 5000);
     }
     isSchemaValid_alpha(tablename, tableType, cb) {
         var params = {
@@ -87,7 +88,7 @@ class TableBuilder {
                     "AttributeName": "cert",
                     "KeyType": "RANGE"
                 }],
-            "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapcity },
+            "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapacity },
             "LocalSecondaryIndexes": [{
                     "IndexName": "ddval-index",
                     "KeySchema": [{ "AttributeName": "varname", "KeyType": "HASH" }, {
@@ -110,7 +111,7 @@ class TableBuilder {
                     "AttributeName": "cert",
                     "KeyType": "RANGE"
                 }],
-            "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapcity },
+            "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": this._writeCapacity },
             "LocalSecondaryIndexes": [{
                     "IndexName": "ddval-index",
                     "KeySchema": [{ "AttributeName": "varname", "KeyType": "HASH" }, {
@@ -124,26 +125,29 @@ class TableBuilder {
         // TO THE CLASS METHODS AND PROPERTIES
         this._table_name = tablename;
         this._table_type = tableType;
-        this._writeCapcity = writeCapacity;
+        this._writeCapacity = writeCapacity;
         this._tableState = {
             tableType: tableType,
             startTime: Date.now(),
             tableName: tablename,
             tableExists: false,
-            tableSchema: {},
+            alpha_schema: this._alpha_schema,
+            numeric_schema: this._numeric_schema,
+            writeCapacity: writeCapacity,
             schemaValid: false,
             secondsForTO: 20,
             tableBeingCreated: false,
             methods: {
                 getTableSchema: this.getTableSchema,
-                createTable_alpha: this.createTable_alpha,
-                createTable_numeric: this.createTable_numeric
+                createTable: this.createTable,
             }
         };
     }
     //CB SHOULD CONTAIN TRUE AFTER TABLE EXISTS AND SCHEMA IS VALIDATED
     build(cb) {
         console.log('build', this._table_type, this._table_name);
+        var tableState = this._tableState;
+        tableState.cb = cb;
         //
         let interval_TableExists = setInterval(function (state) {
             var elapsedTime = Date.now() - state.startTime;
@@ -160,8 +164,8 @@ class TableBuilder {
                     if (!tableExists) {
                         state.tableBeingCreated = true;
                         state.tableType == TableType.alpha ?
-                            state.methods.createTable_alpha(state.tableName) :
-                            state.methods.createTable_numeric(state.tableName);
+                            state.methods.createTable(state.tableName, state.alpha_schema, state.writeCapacity) :
+                            state.methods.createTable(state.tableName, state.numeric_schema, state.writeCapacity);
                     }
                 });
             }
@@ -179,40 +183,55 @@ class TableBuilder {
             }
             //STOP POLLING IF TIMEOUT LIMIT IS REACHED
             if (elapsedTime / 1000 >= state.secondsForTO) {
+                console.log('TableBuilder.build() has timed out', tableState);
                 clearInterval(interval_TableExists);
             }
             //STOP POLLING IF CRITERIA HAVE BEEN SATISFIED
-            if (state.tableExists && state.schemaValid) {
+            if (state.tableExists) {
+                console.log('TableBuilder.build() SUCCESS. about to cb(true)', state.tableName);
                 state.cb(true);
                 clearInterval(interval_TableExists);
                 return;
             }
-        }, 5000, this._tableState);
+        }, 5000, tableState);
     }
     //MAXIMIZE SHOULD RETURN TRUE ONCE THE WRITE CAPACITY IS SET AND STATE IS STABILIZED
     maximize(cb) {
         cb(true);
         return;
     }
-    createTable_alpha(tablename, cb) {
-        var params = this._alpha_schema;
+    static updateThroughputCapacity(tableName, readcapacity, writecapacity) {
+        var params = {
+            "TableName": tableName,
+            "ProvisionedThroughput": {
+                "ReadCapacityUnits": readcapacity,
+                "WriteCapacityUnits": writecapacity
+            }
+        };
+        dynamodb.updateTable(params, function (err, data) {
+            if (err)
+                console.log(err, err.stack); // an error occurred
+            else
+                console.log('succesfully updated write capacity', data); // successful response
+        });
+    }
+    createTable(tablename, schema, writeCapacity) {
+        var params = schema;
+        params.TableName = tablename;
+        params.ProvisionedThroughput.WriteCapacityUnits = writeCapacity;
+        //console.log('createTable params', params);
         dynamodb.createTable(params, function (err, data) {
             if (err) {
                 console.log(err, err.stack);
-                cb(err);
+                //cb(err)
+                console.log('createTable returned error from AWS', err);
             } // an error occurred
             else {
-                cb(data);
-                console.log(data);
             } // successful response
         });
         //Only one table with secondary indexes can be in the CREATING state at any given time.
-        console.log('creating alpha talbe ', tablename);
+        console.log('creating table ', tablename);
         //this._alpha_schema
-    }
-    createTable_numeric(tablename, cb) {
-        //Only one table with secondary indexes can be in the CREATING state at any given time.
-        console.log('creating numeric table ', tablename);
     }
     //GETTABLESCHEMA CALLBACK INCLUDES 1) TRUE IF TABLE EXISTS 2) SCHEMA
     getTableSchema(tableName, cb) {
@@ -221,10 +240,11 @@ class TableBuilder {
         };
         dynamodb.describeTable(params, function (err, data) {
             if (err) {
-                console.log('dynamodb.describeTable err', err, params);
+                //table not found
                 cb('');
             }
             if (data) {
+                //table exists, return true and the table schema.
                 cb(true, data);
             }
             return;
@@ -241,54 +261,45 @@ class TableType {
 }
 TableType.alpha = new TableType('alpha');
 TableType.numeric = new TableType('numeric');
-var startime = Date.now();
-function createTable_alpha(tablename, writeCapacity) {
+function deleteTables() {
     var params = {
-        "AttributeDefinitions": [{ "AttributeName": "cert", "AttributeType": "N" }, {
-                "AttributeName": "ddval",
-                "AttributeType": "S"
-            }, { "AttributeName": "varname", "AttributeType": "S" }],
-        "TableName": tablename,
-        "KeySchema": [{ "AttributeName": "varname", "KeyType": "HASH" }, {
-                "AttributeName": "cert",
-                "KeyType": "RANGE"
-            }],
-        "ProvisionedThroughput": { "ReadCapacityUnits": 1, "WriteCapacityUnits": writeCapacity },
-        "LocalSecondaryIndexes": [{
-                "IndexName": "ddval-index",
-                "KeySchema": [{ "AttributeName": "varname", "KeyType": "HASH" }, {
-                        "AttributeName": "ddval",
-                        "KeyType": "RANGE"
-                    }],
-                "Projection": { "ProjectionType": "ALL" },
-            }]
+        ExclusiveStartTableName: 'FDIC-',
+        Limit: 50
     };
-    dynamodb.createTable(params, function (err, data) {
-        if (err)
-            console.log(err, err.stack); // an error occurred
-        else
-            console.log(data); // successful response
-    });
-}
-function describet(tablename) {
-    var params = {
-        TableName: tablename
-    };
-    dynamodb.describeTable(params, function (err, data) {
+    dynamodb.listTables(params, function (err, data) {
         if (err)
             console.log(err, err.stack); // an error occurred
         else {
-            //check attributes on data object
-            console.log(data);
+            var x = async.filter(data.TableNames, function (item, cb) {
+                console.log('checking item', item);
+                if (item.substring(0, 6) === 'FDIC-2') {
+                    var params = {
+                        TableName: item
+                    };
+                    dynamodb.deleteTable(params, function (err, data) {
+                        if (err)
+                            console.log(err, err.stack); // an error occurred
+                        else
+                            console.log(data); // successful response
+                    });
+                    cb(true);
+                    return;
+                }
+                else {
+                    cb(false);
+                    return;
+                }
+            }, function (fieldresults) {
+                console.log(fieldresults);
+            });
         }
     });
 }
-var tablename = 'Aaaxxxxx1';
-//createTable_alpha(tablename,1000);
-describet(tablename);
-dynamodb.des;
-//var tp = new TablePreparer(filename);
+//var filename = 'All_Reports_20121231_Net+Loans+and+Leases.csv';
+//var tp = new TablePreparer(filename, 1);
 //tp.prepareTables(function (data) {
-//    console.log(data)
-//}) 
+//    console.log("preparTables returns:",data)
+//});
+//TableBuilder.updateThroughputCapacity("FDIC-2012-12-31-NUM",1,1);
+deleteTables();
 //# sourceMappingURL=table-preparer.js.map
