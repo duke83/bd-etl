@@ -5,7 +5,7 @@
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3({ s3ForcePathStyle: true });
 var parse = require('csv-parse');
-function nrow(filename) {
+function getRecordCount(filename) {
     var s3FilenameParams = {
         Bucket: 'fdic_stage_3',
         Key: filename
@@ -24,9 +24,10 @@ function nrow(filename) {
     });
     readstream.on('end', function () {
         var endTime = Date.now();
-        console.log('total', (endTime - startTime) / 1000);
-        console.log('parser.count', parser.count);
-        context.succeed(parser.count);
+        console.log(parser.count);
     });
 }
+var testfile = "All_Reports_19921231_- Past Due and Nonaccrual Loans Wholly or Partially US Gvmt Guaranteed.csv";
+var test = getRecordCount(testfile);
+//console.log(test)
 //# sourceMappingURL=util.js.map

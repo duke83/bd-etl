@@ -8,7 +8,7 @@ var AWS = require('aws-sdk');
 var s3 = new AWS.S3({s3ForcePathStyle: true});
 var parse = require('csv-parse');
 
-function nrow(filename){
+function getRecordCount(filename){
     var s3FilenameParams = {
         Bucket: 'fdic_stage_3',
         Key: filename
@@ -33,3 +33,5 @@ function nrow(filename){
     });
 }
 
+var testfile="All_Reports_19921231_- Past Due and Nonaccrual Loans Wholly or Partially US Gvmt Guaranteed.csv"
+getRecordCount(testfile)
