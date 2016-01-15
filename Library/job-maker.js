@@ -3,7 +3,7 @@
 var AWS = require('aws-sdk');
 var QDateModule = require('./QDate');
 var sqs = new AWS.SQS({ region: "us-east-1" });
-var util = require('util.js');
+var util = require('./util.js');
 class JobMaker {
     constructor(s3Proxy, sqsProxy) {
         var qd = new QDateModule.QDate(2012, 1);
@@ -17,9 +17,12 @@ class JobMaker {
             if (data) {
                 for (let i = 0; i < data.Contents.length; i++) {
                     console.log(data.Contents[i].Key);
-                    var recordCount = util.getRecordCount(data.Contents[i].Key);
+                    var recordCount = 0;
+                    util.getRecordCount(data.Contents[i].Key, function (data) {
+                        recordCount = data;
+                    });
                     sqs.sendMessage({
-                        MessageBody: { filename: data.Contents[i].Key, recordCount = recordCount },
+                        MessageBody: data.Contents[i].Key + recordCount,
                         QueueUrl: 'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs' //,
                     }, function (err2, data2) {
                         if (err2) {
@@ -51,7 +54,7 @@ exports.JobMaker = JobMaker;
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3({ s3ForcePathStyle: true });
 // INSTANTIATE A NEW JobMaker OBJECT
-var maker = new JobMaker(s3);
+var maker = new JobMaker(s3, sqs);
 // INVOKE THE make() ME///THOD
 maker.make();
 //# sourceMappingURL=job-maker.js.map
