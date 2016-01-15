@@ -6,7 +6,7 @@ var AWS = require('aws-sdk');
 var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
 //var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
 var docClient = new AWS.DynamoDB.DocumentClient(dynamodb);
-var etlState = require('./bd-etl-state.js');
+var etlState = require('./bnkrd-etl-state.js');
 var async = require('async');
 class TablePreparer {
     constructor(filename, writeCapacity) {

@@ -10,10 +10,8 @@
  "state": "writing"
  }
  */
-
 /// <reference path="../typings/node.d.ts" />
 'use strict';
-import {QDate} from "./QDate";
 var config = require("./config.js");
 var AWS = require('aws-sdk');
 var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
@@ -26,12 +24,9 @@ var params = {
 //    if (err) console.log(err, err.stack); // an error occurred
 //    else     console.log(data);           // successful response
 //});
-
-
-export function updateProcessingState(qdate:string, filename:string, processState:ProcessState) {
+function updateProcessingState(qdate, filename, processState) {
     //write a record to bd-etl-state (overwrite if already exists)
     var thisdate = new Date();
-
     var params = {
         TableName: 'bd-etl-state',
         Item: {
@@ -42,12 +37,14 @@ export function updateProcessingState(qdate:string, filename:string, processStat
         }
     };
     docClient.put(params, function (err, data) {
-        if (err) console.log(err);
-        else console.log(data);
-    })
+        if (err)
+            console.log(err);
+        else
+            console.log(data);
+    });
 }
-
-export function quarterIsBeingProcessed(qdate:string, cb) {
+exports.updateProcessingState = updateProcessingState;
+function quarterIsBeingProcessed(qdate, cb) {
     var params = {
         TableName: 'bd-etl-state',
         KeyConditions: {
@@ -62,26 +59,25 @@ export function quarterIsBeingProcessed(qdate:string, cb) {
                 AttributeValueList: ['startingToProcess']
             }
         }
-
     };
     docClient.query(params, function (err, data) {
-        if (err) throw(err);
+        if (err)
+            throw (err);
         if (data.Items.length > 0) {
-            cb(true)
+            cb(true);
         }
         else {
-            cb(false)
+            cb(false);
         }
         ;
     });
-
 }
-
+exports.quarterIsBeingProcessed = quarterIsBeingProcessed;
 // When creating tables with secondary indexes, only one can be
 // in 'creating' state at any given time. (http://docs.aws.amazon.com/awsjavascriptsdk/latest/aws/dynamodb.html#createtable-property)
 // Additionally, The number of concurrent table requests (cumulative number of tables in the CREATING, DELETING or UPDATING state) exceeds the maximum allowed of 10.
 // (http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html)
-export function tableUpdate_start(tablename, tablestatus:TableState) {
+function tableUpdate_start(tablename, tablestatus) {
     var params = {
         TableName: 'bd-etl-table-status',
         Item: {
@@ -90,12 +86,14 @@ export function tableUpdate_start(tablename, tablestatus:TableState) {
         }
     };
     docClient.put(params, function (err, data) {
-        if (err) console.log(err);
-        else console.log(data);
-    })
+        if (err)
+            console.log(err);
+        else
+            console.log(data);
+    });
 }
-
-export function tableUpdate_complete(tablename, tablestatus:TableState) {
+exports.tableUpdate_start = tableUpdate_start;
+function tableUpdate_complete(tablename, tablestatus) {
     var params = {
         Key: {
             tableStatus: tablestatus.toString(),
@@ -104,12 +102,14 @@ export function tableUpdate_complete(tablename, tablestatus:TableState) {
         TableName: 'bd-etl-table-status',
     };
     docClient.delete(params, function (err, data) {
-        if (err) console.log(err);
-        else console.log(data);
-    })
+        if (err)
+            console.log(err);
+        else
+            console.log(data);
+    });
 }
-
-export function tablesCreating_count() {
+exports.tableUpdate_complete = tableUpdate_complete;
+function tablesCreating_count() {
     var params = {
         TableName: 'bd-etl-table-status',
         KeyConditions: {
@@ -118,64 +118,85 @@ export function tablesCreating_count() {
                 AttributeValueList: ['CREATING']
             }
         }
-
     };
     docClient.query(params, function (err, data) {
-        if (err) throw(err);
-        console.log(data.Count)
+        if (err)
+            throw (err);
+        console.log(data.Count);
     });
 }
-
-export function tablesInProcss_count(cb) {
+exports.tablesCreating_count = tablesCreating_count;
+function tablesInProcss_count(cb) {
     var params = {
         TableName: 'bd-etl-table-status',
-
     };
     docClient.scan(params, function (err, data) {
-        if (err) throw(err);
+        if (err)
+            throw (err);
         cb(data.Count);
     });
 }
-
-export class ProcessState {
-    constructor(public value:string) {
-    }
-
-    toString() {
-        return this.value
-    }
-
-    static startingToProcess = new ProcessState('startingToProcess');
-    static finishedProcessing = new ProcessState('finishedProcessing');
+exports.tablesInProcss_count = tablesInProcss_count;
+function tablesInProcss_reset(cb) {
+    var params = {
+        TableName: 'bd-etl-table-status',
+    };
+    docClient.scan(params, function (err, data) {
+        if (err)
+            throw (err);
+        cb(data.Count);
+    });
 }
-
-export class TableState {
-    constructor(public value:string) {
-    }
-
-    toString() {
-        return this.value
-    }
-
-    static CREATING = new ProcessState('CREATING');
-    static DELETING = new ProcessState('DELETING');
-    static UPDATING = new ProcessState('UPDATING');
+exports.tablesInProcss_reset = tablesInProcss_reset;
+function takeTableOutOfProcess(tablename, cb) {
+    var params = {
+        Key: {
+            tableStatus: "UPDATING"
+        },
+        TableName: "bd-etl-table-status"
+    };
+    docClient.delete(params, function (err, data) {
+        if (err)
+            console.log(err, err.stack); // an error occurred
+        else
+            console.log(data); // successful response
+    });
 }
-
-
+exports.takeTableOutOfProcess = takeTableOutOfProcess;
+class ProcessState {
+    constructor(value) {
+        this.value = value;
+    }
+    toString() {
+        return this.value;
+    }
+}
+ProcessState.startingToProcess = new ProcessState('startingToProcess');
+ProcessState.finishedProcessing = new ProcessState('finishedProcessing');
+exports.ProcessState = ProcessState;
+class TableState {
+    constructor(value) {
+        this.value = value;
+    }
+    toString() {
+        return this.value;
+    }
+}
+TableState.CREATING = new ProcessState('CREATING');
+TableState.DELETING = new ProcessState('DELETING');
+TableState.UPDATING = new ProcessState('UPDATING');
+exports.TableState = TableState;
 //console.log(new Date())
 //updateProcessingState('20121231','def.csv',ProcessState.finishedProcessing);
 //console.log(config.dynamodbConfig())
-
 //function cb(data){
 //    console.log(data)
 //}
 //quarterIsBeingProcessed('20121231',cb);
-
 //tableUpdate_start('testttable_2A',TableState.UPDATING);
-
 //tableUpdate_complete('testttable_2A',TableState.UPDATING);
-
 //tablesCreating_count()
-
-//tablesInProcss_count()
+takeTableOutOfProcess("testttable_1A", function (data) {
+    console.log(data);
+});
+//# sourceMappingURL=bnkrd-etl-state.js.map

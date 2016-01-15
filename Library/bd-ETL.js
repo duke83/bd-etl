@@ -3,23 +3,32 @@ var TablePreparerModule = require("./table-preparer");
 var AWS = require("aws-sdk");
 var EventEmitter = require('events');
 //var emitter = new EventEmitter();
+var async = require('async');
+var files = [
+    { filename: 'All_Reports_20141231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20131231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20121231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20111231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20101231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20091231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20081231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20071231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20061231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20051231_Net+Loans+and+Leases.csv', recordCount: 40 },
+    { filename: 'All_Reports_20041231_Net+Loans+and+Leases.csv', recordCount: 40 }
+];
+var fname = '';
+function getNextFile() {
+    if (files.length > 0) {
+        var rtrn = files[files.length - 1].filename;
+        files.pop();
+        return rtrn;
+    }
+}
 class BdETL {
     constructor() {
         this._currentFileName = null;
         this._emitter = new EventEmitter();
-        this.files = [
-            { filename: 'All_Reports_20141231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20131231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20121231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20111231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20101231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20091231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20081231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20071231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20061231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20051231_Net+Loans+and+Leases.csv', recordCount: 40 },
-            { filename: 'All_Reports_20041231_Net+Loans+and+Leases.csv', recordCount: 40 }
-        ];
         // this._s3 = new AWS.S3(config.s3Config);
         // this._sqs = new AWS.SQS(config.sqsConfig);
         // this._dynamoDocClient = new AWS.DynamoDB.DocumentClient(config.dynamodbConfig)
@@ -29,32 +38,50 @@ class BdETL {
         //var maker = new FdicFileJobMakerModule.JobMaker()
         return 'maker.make()';
     }
-    processFiles() {
-        var func = this.processFile;
-        for (var i = 0; i < this.files.length; i++) {
-            let fname = this.files[i].filename;
-            setTimeout(function () {
-                func(fname);
-            }, 0); //this encompasses many asynchronous calls. The loop continues
-        }
+    processFilesWhilst() {
+        //var fname = currentFilename;
+        var processFile = this.processFile;
+        ///var getNextFile = getNextFile;
+        async.whilst(
+        //test
+        function () {
+            fname = getNextFile();
+            console.log('test fname', fname);
+            if (fname.length > 0) {
+                return true;
+            }
+        }, 
+        //run this every time test is true
+        function (cb) {
+            processFile(fname, function (cb1) {
+                if (cb1) {
+                    console.log('myLongfunction returns', cb1);
+                    cb(null, 'xx');
+                }
+                else {
+                    console.log('muLongfunction no joy', cb1);
+                    cb("got an error");
+                }
+            });
+        }, 
+        //run this when test fails and/or repeated execution stops
+        function (err, n) {
+            console.log('err', err);
+            console.log('n', n);
+        });
     }
-    getNextFile() {
-        //console.log(this.files[11])
-        var rtrn = this.files[this.files.length - 1].filename;
-        this.files.pop();
-        return rtrn;
-    }
-    processFile(filename) {
+    processFile(filename, cb) {
         let tablePreparer = new TablePreparerModule.TablePreparer(filename, 1);
-        //var emmiter = this._emitter
         tablePreparer.prepareTables(function (data) {
             if (data == 'ready') {
                 console.log('tables-are-ready', filename);
+                cb(true);
+                return;
             }
         });
     }
 }
 exports.BdETL = BdETL;
 var etl = new BdETL();
-etl.processFiles();
+etl.processFilesWhilst();
 //# sourceMappingURL=bd-ETL.js.map

@@ -16,15 +16,7 @@ var files = [
     {filename: 'All_Reports_20041231_Net+Loans+and+Leases.csv', recordCount: 40}
 ];
 
-function processFiles() {
-    for (var i = 0; i < files.length; i++) {
-        myLongfunction(files[i], function (data) {
-            if (data) {
-                myLongFunction
-            }
-        })
-    }
-}
+
 
 function processFilesWhile() {
     var x = 10
