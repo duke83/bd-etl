@@ -84,5 +84,4 @@ class BdETL {
 exports.BdETL = BdETL;
 var etl = new BdETL();
 etl.processFilesWhilst();
-g;
 //# sourceMappingURL=bd-ETL.js.map
