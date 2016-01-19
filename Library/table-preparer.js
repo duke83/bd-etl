@@ -6,8 +6,10 @@ var AWS = require('aws-sdk');
 var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
 //var docClient=new AWS.DynamoDB.DocumentClient(config.dynamodbConfig());
 var docClient = new AWS.DynamoDB.DocumentClient(dynamodb);
-var etlState = require('./bnkrd-etl-state.js');
+//var etlState = require('./bnkrd-etl-state.js');
 var async = require('async');
+var EventEmitter = require('events');
+var emitter = new EventEmitter();
 class TablePreparer {
     constructor(filename, writeCapacity) {
         this._alpha_build_complete = false;
@@ -64,7 +66,7 @@ class TablePreparer {
         };
         dynamodb.describeTable(params, function (err, data) {
             if (err)
-                console.log(err, err.stack); // an error occurred
+                console.log('dynamodb.describeTable err', err, err.stack); // an error occurred
             else {
                 //check attributes on data object
                 console.log(data);
@@ -268,31 +270,60 @@ function deleteTables() {
     };
     dynamodb.listTables(params, function (err, data) {
         if (err)
-            console.log(err, err.stack); // an error occurred
+            console.log('dynamodb.listTables err', err, err.stack); // an error occurred
         else {
-            var x = async.filter(data.TableNames, function (item, cb) {
-                console.log('checking item', item);
-                if (item.substring(0, 6) === 'FDIC-2') {
-                    var params = {
-                        TableName: item
-                    };
-                    dynamodb.deleteTable(params, function (err, data) {
-                        if (err)
-                            console.log(err, err.stack); // an error occurred
-                        else
-                            console.log(data); // successful response
-                    });
-                    cb(true);
-                    return;
-                }
-                else {
-                    cb(false);
-                    return;
-                }
-            }, function (fieldresults) {
-                console.log(fieldresults);
-            });
+            emitter.emit('fdic-table-list-complete', data);
         }
+    });
+    emitter.on('fdic-table-list-complete', function (data) {
+        console.log('emitter.on...', data);
+        var tableCountBeingDeleted = 0;
+        console.log('data.TableNames.length', data.TableNames.length);
+        var deleteTableCallback = function (err, rslt) {
+            if (err) {
+                console.log('deleteTable callback from deleteTables', err);
+            }
+            if (rslt) {
+                tableCountBeingDeleted--;
+                console.log('success in deleteTable callback', rslt);
+            }
+        };
+        for (let i = 0; i < data.TableNames.length; i++) {
+            console.log('data.TableNames[i].substring(0, 5)', data.TableNames[i].substring(0, 5));
+            var intervalSlowItDown;
+            if (data.TableNames[i].substring(0, 5) === "FDIC-") {
+                console.log('in the loop', i, data.TableNames[i]);
+                if (tableCountBeingDeleted > 8) {
+                    intervalSlowItDown = setInterval(function () {
+                        tableCountBeingDeleted++;
+                        console.log('tableCountBeingDeleted', tableCountBeingDeleted);
+                        deleteTable(data.TableNames[i], deleteTableCallback);
+                    }, 5000);
+                }
+                if (tableCountBeingDeleted <= 8) {
+                    clearInterval(intervalSlowItDown);
+                    tableCountBeingDeleted++;
+                    console.log('tableCountBeingDeleted', tableCountBeingDeleted);
+                    deleteTable(data.TableNames[i], deleteTableCallback);
+                }
+                if (tableCountBeingDeleted == 0) {
+                    clearInterval(intervalSlowItDown);
+                }
+            }
+        }
+    });
+}
+;
+function deleteTable(tableName, cb) {
+    var params = {
+        TableName: tableName
+    };
+    dynamodb.deleteTable(params, function (err, data) {
+        if (err) {
+            cb(err, null);
+        }
+        else
+            cb(null, data); // successful response
     });
 }
 //var filename = 'All_Reports_20121231_Net+Loans+and+Leases.csv';
@@ -301,5 +332,5 @@ function deleteTables() {
 //    console.log("preparTables returns:",data)
 //});
 //TableBuilder.updateThroughputCapacity("FDIC-2012-12-31-NUM",1,1);
-deleteTables();
+//deleteTables(); 
 //# sourceMappingURL=table-preparer.js.map
