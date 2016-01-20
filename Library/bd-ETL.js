@@ -1,5 +1,6 @@
 'use strict';
 var TablePreparerModule = require("./table-preparer");
+var TableLoaderModule = require("./table-loader");
 var AWS = require("aws-sdk");
 var EventEmitter = require('events');
 //var emitter = new EventEmitter();
@@ -38,12 +39,13 @@ class BdETL {
         //var maker = new FdicFileJobMakerModule.JobMaker()
         return 'maker.make()';
     }
+    //USING ASYNC.JS TO SYNCHRONOUSLY PROCESS FILE
     processFilesWhilst() {
-        //var fname = currentFilename;
+        //bring processFile method into scope
         var processFile = this.processFile;
         ///var getNextFile = getNextFile;
         async.whilst(
-        //test
+        //test (first argument of whilst async.whilst method)
         function () {
             fname = getNextFile();
             console.log('test fname', fname);
@@ -52,6 +54,7 @@ class BdETL {
             }
         }, 
         //run this every time test is true
+        //(second method of async.whilst method)
         function (cb) {
             processFile(fname, function (cb1) {
                 if (cb1) {
@@ -65,6 +68,7 @@ class BdETL {
             });
         }, 
         //run this when test fails and/or repeated execution stops
+        //(third argument of async.whilst method)
         function (err, n) {
             console.log('err', err);
             console.log('n', n);
@@ -75,6 +79,7 @@ class BdETL {
         tablePreparer.prepareTables(function (data) {
             if (data == 'ready') {
                 console.log('tables-are-ready', filename);
+                let tableLoader = new TableLoaderModule.TableLoader(filename);
                 cb(true);
                 return;
             }

@@ -1,5 +1,6 @@
 
 function loadFdicRow_Numeric(tablename, varName, ddval, cert) {
+
     var itemParams = {
         TableName: tablename,
         Item: {
