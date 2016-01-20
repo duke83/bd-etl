@@ -2,49 +2,81 @@
 'use strict';
 var AWS = require('aws-sdk');
 import * as QDateModule from './QDate'
-var sqs = new AWS.SQS({region:"us-east-1"});
-var util = require('./util.js')
+var sqs = new AWS.SQS({region: "us-east-1"});
+var util = require('./util.js');
+var AWS = require('aws-sdk');
+var s3 = new AWS.S3({s3ForcePathStyle: true});
+var sqsUrl = 'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs';
 
 export class JobMaker {
     constructor(s3Proxy, sqsProxy) {
-        var qd = new QDateModule.QDate(2012, 1);
-        s3Proxy.listObjects({
-            Bucket:'fdic_stage_3',
-            Prefix:'All_Reports_'+qd.string
-        },
-        function(err, data){
-            if(err){console.log(err)}
+
+    }
+
+
+    public static getNextRecord(cb) {
+        var params = {
+            "QueueUrl": sqsUrl,
+            "MaxNumberOfMessages": 1,
+            "VisibilityTimeout": 30,
+            "WaitTimeSeconds": 20
+        };
+        sqs.receiveMessage(params, function (err, data) {
+            console.log('recievemessage err', err);
             if(data){
-                for(let i = 0; i < data.Contents.length; i++){
-                    console.log(data.Contents[i].Key);
-                    var recordCount=0;
-
-                    util.getRecordCount(data.Contents[i].Key,function(data){
-                        recordCount=data;
-                    });
-
-                    sqs.sendMessage({
-                            MessageBody: data.Contents[i].Key + recordCount,
-                            QueueUrl:'https://sqs.us-east-1.amazonaws.com/859294003383/FDICFileJobs'//,
-                            //MessageAttributes:{someKey:{DataType:'String'}}
-                        },
-                        function(err2, data2){
-                            if(err2){console.log(err2)}
-                            if(data2){console.log(data2)}
-                        })
-                }
-                //console.log(sqs.getQueueUrl({
-                //    QueueName: 'FDICFileJobs'
-                //}))
+                var filename=data.Messages[0].Body;
+                var handle = data.Messages[0].ReceiptHandle;
+                sqs.deleteMessage({
+                    "QueueUrl" :sqsUrl,
+                    "ReceiptHandle" :handle
+                }, function(err, data){
+                    console.log('deletemesage err', err);
+                    console.log('deletemessage data', data);
+                    cb(filename);
+                    return filename;
+                });
             }
+            console.log('receivemessage data', data)
         })
-    };
+    }
+    
 
-    make() {
-        var qd = new QDateModule.QDate(2012, 1);
-        //console.log(qd);
+    public static make(qd:QDateModule.QDate) {
+        s3.listObjects({
+                Bucket: 'fdic_stage_3',
+                Prefix: 'All_Reports_' + qd.string
+            },
+            function (err, data) {
+                if (err) {
+                    console.log(err)
+                }
+                if (data) {
+                    for (let i = 0; i < data.Contents.length; i++) {
+                        console.log(data.Contents[i].Key);
+
+                        sqs.sendMessage({
+                                MessageBody: data.Contents[i].Key,
+                                QueueUrl: sqsUrl
+                                //MessageAttributes:{someKey:{DataType:'String'}}
+                            },
+                            function (err2, data2) {
+                                if (err2) {
+                                    console.log(err2)
+                                }
+                                if (data2) {
+                                    console.log(data2)
+                                }
+                            })
+                    }
+                    //console.log(sqs.getQueueUrl({
+                    //    QueueName: 'FDICFileJobs'
+                    //}))
+                }
+            }
+        )
     }
 }
+
 
 //var sqsParams = {
 //    MessageBody: data.Contents[i].Key,
@@ -55,12 +87,19 @@ export class JobMaker {
 
 // THIS IS THE CLIENT PORTION
 //JOB-MAKER REQUIRES PROXIES FOR S3 AND SQS
-var AWS = require('aws-sdk');
-var s3 = new AWS.S3({s3ForcePathStyle: true});
 
 
-// INSTANTIATE A NEW JobMaker OBJECT
-var maker = new JobMaker(s3,sqs);
+// INVOKE THE make() METHOD
+//var qd = QDateModule.QDate.getFirstQuarterQdate();
+//
+//while (qd.string < '20151231') {
+//    console.log(qd);
+//    qd = qd.getNext();
+//    //JobMaker.make(qd);
+//}
 
-// INVOKE THE make() ME///THOD
-maker.make();
+
+JobMaker.getNextRecord(function(fname){
+    console.log("AND THE FILENAME (From CB) IS:", fname);
+});
+//console.log("\n AND THE FILENAME IS: ", JobMaker.getNextRecord());

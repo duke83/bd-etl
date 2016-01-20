@@ -31,5 +31,5 @@ function getRecordCount(filename, cb) {
 }
 exports.getRecordCount = getRecordCount;
 var testfile = "All_Reports_19921231_- Past Due and Nonaccrual Loans Wholly or Partially US Gvmt Guaranteed.csv";
-var test = getRecordCount(testfile);
+//var test = getRecordCount(testfile) 
 //# sourceMappingURL=util.js.map

@@ -54,8 +54,13 @@ class QDate {
         var qrtr = QDate.getQuarterFromDateString(filename.substring(16, 20));
         return new QDate(year, qrtr);
     }
+    //There will only ever by a single first quarter date for this dataset
+    //It happens to be 19921231
+    static getFirstQuarterQdate() {
+        return new QDate(1992, 4);
+    }
     static getQuarterFromDateString(datestring) {
-        //datstring should b something like '1231'
+        //datstring should be something like '1231'
         switch (datestring) {
             case '0331':
                 return 1;
@@ -83,4 +88,11 @@ class QDate {
     }
 }
 exports.QDate = QDate;
+//var qd = QDate.getFirstQuarterQdate();
+//
+//while(qd.string<'20151231'){
+//    console.log(qd)
+//    qd = qd.getNext()
+//}
+//console.log(QDate.getFirstQuarterQdate().getNext()) 
 //# sourceMappingURL=QDate.js.map
