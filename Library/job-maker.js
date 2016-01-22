@@ -78,8 +78,8 @@ exports.JobMaker = JobMaker;
 //    qd = qd.getNext();
 //    //JobMaker.make(qd);
 //}
-JobMaker.getNextRecord(function (fname) {
-    console.log("AND THE FILENAME (From CB) IS:", fname);
-});
+//JobMaker.getNextRecord(function(fname){
+//    console.log("AND THE FILENAME (From CB) IS:", fname);
+//});
 //console.log("\n AND THE FILENAME IS: ", JobMaker.getNextRecord()); 
 //# sourceMappingURL=job-maker.js.map

@@ -4,7 +4,27 @@ export class QDate {
     private _year:number;
     private _quarter:number;
     private _isValid:boolean;
-    public details:Array<string> = [];
+    public _validationMessages:Array<string> = [];
+
+
+    constructor(year:number, quarter:number) {
+        this._year = year;
+        this._quarter = quarter;
+        this._isValid = true;
+        //validate inputs
+        const regexYear = /^[0-9]{4}$/;
+        if (!regexYear.test(year.toString())) {
+            this._validationMessages.push('year must be a 4-digit number')
+            this._isValid = false;
+        }
+
+        const regexQuarter = /^[1-4]$/
+        if (!regexQuarter.test(quarter.toString())) {
+            this._validationMessages.push('quarter must be between 1 and 4 (inclusive)')
+            this._isValid = false;
+        }
+    }
+
 
     get string():string {
         //if(this.isValid)
@@ -35,6 +55,20 @@ export class QDate {
         return this._year.toString() + rtrnQtr
     }
 
+    public get tablename_alpha():string {
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_ALPHA';
+    }
+
+    public get tablename_numeric():string {
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_NUMERIC';
+    }
+
+    public getMonthAndDayFromQuarter():string {
+        if (this._quarter == 1) return "03-31";
+        if (this._quarter == 2) return "06-30";
+        if (this._quarter == 3) return "09-30";
+        if (this._quarter == 4) return "12-31";
+    }
 
     public get isValid():boolean {
         return this._isValid;
@@ -85,24 +119,6 @@ export class QDate {
     }
 
 
-    constructor(year:number, quarter:number) {
-        this._isValid = true;
-        //validate inputs
-        const regexYear = /^[0-9]{4}$/;
-        if (!regexYear.test(year.toString())) {
-            this.details.push('year must be a 4-digit number')
-            this._isValid = false;
-        }
-
-        const regexQuarter = /^[1-4]$/
-        if (!regexQuarter.test(quarter.toString())) {
-            this.details.push('quarter must be between 1 and 4 (inclusive)')
-            this._isValid = false;
-        }
-
-        this._year = year;
-        this._quarter = quarter;
-    }
 }
 
 //var qd = QDate.getFirstQuarterQdate();

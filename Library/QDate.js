@@ -1,21 +1,21 @@
 'use strict';
 class QDate {
     constructor(year, quarter) {
-        this.details = [];
+        this._validationMessages = [];
+        this._year = year;
+        this._quarter = quarter;
         this._isValid = true;
         //validate inputs
         const regexYear = /^[0-9]{4}$/;
         if (!regexYear.test(year.toString())) {
-            this.details.push('year must be a 4-digit number');
+            this._validationMessages.push('year must be a 4-digit number');
             this._isValid = false;
         }
         const regexQuarter = /^[1-4]$/;
         if (!regexQuarter.test(quarter.toString())) {
-            this.details.push('quarter must be between 1 and 4 (inclusive)');
+            this._validationMessages.push('quarter must be between 1 and 4 (inclusive)');
             this._isValid = false;
         }
-        this._year = year;
-        this._quarter = quarter;
     }
     get string() {
         //if(this.isValid)
@@ -43,6 +43,22 @@ class QDate {
                 }
         }
         return this._year.toString() + rtrnQtr;
+    }
+    get tablename_alpha() {
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_ALPHA';
+    }
+    get tablename_numeric() {
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_NUMERIC';
+    }
+    getMonthAndDayFromQuarter() {
+        if (this._quarter == 1)
+            return "03-31";
+        if (this._quarter == 2)
+            return "06-30";
+        if (this._quarter == 3)
+            return "09-30";
+        if (this._quarter == 4)
+            return "12-31";
     }
     get isValid() {
         return this._isValid;

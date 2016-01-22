@@ -39,7 +39,7 @@ export class JobMaker {
             console.log('receivemessage data', data)
         })
     }
-    
+
 
     public static make(qd:QDateModule.QDate) {
         s3.listObjects({
@@ -99,7 +99,7 @@ export class JobMaker {
 //}
 
 
-JobMaker.getNextRecord(function(fname){
-    console.log("AND THE FILENAME (From CB) IS:", fname);
-});
+//JobMaker.getNextRecord(function(fname){
+//    console.log("AND THE FILENAME (From CB) IS:", fname);
+//});
 //console.log("\n AND THE FILENAME IS: ", JobMaker.getNextRecord());
