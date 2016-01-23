@@ -23,6 +23,9 @@ var tablename_alpha;
 var tablename_numeric;
 var arrPutItemsParams = [];//create an array for a flat process to iterate
 var arrErrors = [];
+var rowCount_successful = 0;
+var rowCount_fail = 0;
+
 export function load(filename, callerEmitterParam?) {
     if (callerEmitterParam) {
         callerEmitter = callerEmitterParam
@@ -36,15 +39,25 @@ export function load(filename, callerEmitterParam?) {
     var qdate = QDateModule.QDate.getQDateFromFileName(filename);
     tablename_alpha = qdate.tablename_alpha;
     tablename_numeric = qdate.tablename_numeric;
-    //console.log('tables: ', tablename_alpha, tablename_numeric);
+    console.log('tables: ', tablename_alpha, tablename_numeric);
 
     localEmitter.emit('start', filename)
 }
 
+var bPutEventsStarted=false;
 var IntervalMaster = setInterval(function () {
     var thisDate = new Date();
     console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
+
+    if(arrPutItemsParams.length > 0 && !bPutEventsStarted){
+        console.log('bPutEventsStarted',bPutEventsStarted);
+        bPutEventsStarted=true;
+        localEmitter.emit('ready-to-get-next-from-array');
+    }
     if (arrPutItemsParams.length == 0) {
+        console.log('arrPutItems is empty. Goodbye.', arrErrors.length, arrErrors)
+        clearInterval(IntervalMaster);
+    } if (arrErrors.length > 0) {
         console.log('there were some errors', arrErrors.length, arrErrors)
         clearInterval(IntervalMaster);
     }
@@ -52,15 +65,10 @@ var IntervalMaster = setInterval(function () {
 
 localEmitter.on('start', function (fname) {
     //console.log('xxxxx', csv.transform)
-    //var x = s3.getObject(fname);
-
-
     var s3FilenameParams = {
         Bucket: 'fdic_stage_3',
         Key: fname
     };
-    //var file = require('fs').createWriteStream('/Users/kdm/bd-etl/library/'+fname);
-    //s3.getObject(s3FilenameParams).createReadStream().pipe(file);
     s3.getObject(s3FilenameParams).createReadStream()
         .pipe(csv.parse())
         .pipe(csv.transform(function (record) {
@@ -74,7 +82,6 @@ localEmitter.on('start', function (fname) {
                 };
                 //console.log('row', row);
                 localEmitter.emit('row-parsed-from-s3-file', row)
-
             }
         ));
     setTimeout(function () {
@@ -85,6 +92,7 @@ localEmitter.on('start', function (fname) {
 });
 
 localEmitter.on('row-parsed-from-s3-file', function (row) {
+    //console.log('in row-parsed-from-s3-file', row)
     var glossaryItem = getGlossaryItemByVarName(row.VarName, row.Value);
     var val = row.Value;
     if (glossaryItem.AON == 'numeric' && !isNumber(row.Value)) {
@@ -104,6 +112,7 @@ function getVarName(vname) {
     }
     return vname;
 }
+
 function getGlossaryItemByVarName(varname, val) {
     var gItem = extractGlossaryItem(varname);
     if (gItem) {
@@ -129,8 +138,7 @@ function getGlossaryItemByVarName(varname, val) {
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
-var rowCount_successful = 0;
-var rowCount_fail = 0;
+
 
 function pushToItemsArray(tablename, varName, ddval, cert) {
     var arrTableNameParts = tablename.split("-");
@@ -9882,8 +9890,9 @@ function extractGlossaryItem(varname) {
     }
 }
 
-
 localEmitter.on('ready-to-run-putItem', function (itemsparam) {
+    //console.log('in ready-to-run-putItem about to call dynamodb',itemsparam);
+
     //console.log(itemsparam);
     dynamodb.putItem(itemsparam, function (err, data) {
         if (err) {
@@ -9892,7 +9901,7 @@ localEmitter.on('ready-to-run-putItem', function (itemsparam) {
             //throw('check this out');
         }
         else {
-             console.log('ready-to-run-putItem data', data);
+            // console.log('ready-to-run-putItem data', data);
             localEmitter.emit('ready-to-get-next-from-array');
         }
     });
@@ -9902,7 +9911,7 @@ localEmitter.on('ready-to-get-next-from-array', function () {
     var itemsCount = arrPutItemsParams.length;
     if (itemsCount > 0) {
         var nextItems = arrPutItemsParams.pop();
-        console.log('in ready-to-get-next-from-array',nextItems)
+        //console.log('in ready-to-get-next-from-array',nextItems)
         localEmitter.emit('ready-to-run-putItem', nextItems)
     }
 });
