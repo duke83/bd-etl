@@ -9864,9 +9864,10 @@ localEmitter.on('ready-to-run-putItem', function (itemsparam) {
     dynamodb.putItem(itemsparam, function (err, data) {
         if (err) {
             arrErrors.push({ err: err, itemsparam: itemsparam });
+            console.log('err', err, itemsparam);
         }
         else {
-            // console.log('data', data);
+            console.log('ready-to-run-putItem data', data);
             localEmitter.emit('ready-to-get-next-from-array');
         }
     });
@@ -9875,6 +9876,7 @@ localEmitter.on('ready-to-get-next-from-array', function () {
     var itemsCount = arrPutItemsParams.length;
     if (itemsCount > 0) {
         var nextItems = arrPutItemsParams.pop();
+        console.log('in ready-to-get-next-from-array', nextItems);
         localEmitter.emit('ready-to-run-putItem', nextItems);
     }
 });
