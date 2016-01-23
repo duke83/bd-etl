@@ -45,10 +45,10 @@ class QDate {
         return this._year.toString() + rtrnQtr;
     }
     get tablename_alpha() {
-        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_ALPHA';
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '-ALPHA';
     }
     get tablename_numeric() {
-        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_NUMERIC';
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '-NUM';
     }
     getMonthAndDayFromQuarter() {
         if (this._quarter == 1)

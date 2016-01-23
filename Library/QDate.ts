@@ -56,11 +56,11 @@ export class QDate {
     }
 
     public get tablename_alpha():string {
-        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_ALPHA';
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '-ALPHA';
     }
 
     public get tablename_numeric():string {
-        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '_NUMERIC';
+        return 'FDIC-' + this._year + '-' + this.getMonthAndDayFromQuarter() + '-NUM';
     }
 
     public getMonthAndDayFromQuarter():string {
