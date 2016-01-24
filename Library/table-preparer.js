@@ -327,10 +327,10 @@ function deleteTable(tableName, cb) {
     });
 }
 var filename = 'All_Reports_20121231_Bank Assets Sold and Securitized.csv';
-var tp = new TablePreparer(filename, 75);
+var tp = new TablePreparer(filename, 200);
 tp.prepareTables(function (data) {
     console.log("preparTables returns:", data);
 });
 //TableBuilder.updateThroughputCapacity("FDIC-2012-12-31-NUM",1,1);
-deleteTables();
+//deleteTables(); 
 //# sourceMappingURL=table-preparer.js.map

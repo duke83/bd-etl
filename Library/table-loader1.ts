@@ -51,15 +51,35 @@ export function load(filename, callerEmitterParam?) {
 }
 var bS3LoadComplete = false;
 var arrPutItemslastLength = 0;
+var arrPutItemsTotalLength = 0;
 var bPutEventsStarted = false;
+var dtStartLoading;
 var IntervalMaster = setInterval(function () {
-    var thisDate = new Date();
-    console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
-
+    var thisDate:any = new Date();
     //check to see if arrPutItemsLength is still growing
     var thisLength = arrPutItemsParams.length;
+
+    if (bPutEventsStarted) {
+        var totalElapsedseconds:number = (thisDate - dtStartLoading) / 1000;
+        var totalRecordsInserted = arrPutItemsTotalLength - thisLength;
+        var last10SecondsRecordsInserted = arrPutItemslastLength - thisLength;
+        var recordsPerSecond = totalRecordsInserted / totalElapsedseconds;
+        var recordsLeft = arrPutItemsTotalLength - totalRecordsInserted;
+        var secondsLeft = recordsLeft / recordsPerSecond;
+        console.log('last10secondsInserted:' + last10SecondsRecordsInserted +
+            ' hoursLeft:' + secondsLeft / 60 / 60 +
+            ' recordsLeft:' + recordsLeft
+        )
+    }
+
+    if(!bPutEventsStarted) {
+        console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
+    }
+
     if (arrPutItemslastLength == thisLength && !bPutEventsStarted) {
         //kick of dynamodb load only after array has stopped growing
+        arrPutItemsTotalLength = arrPutItemslastLength;
+        dtStartLoading = new Date();
         bPutEventsStarted = true;
         console.log('bPutEventsStarted', bPutEventsStarted);
         localEmitter.emit('ready-to-get-next-from-array');
@@ -149,7 +169,9 @@ function pushToItemsArray(tablename, varName, ddval, cert) {
         }
     };
     //console.log('loadFdicRow itemParams', itemParams);
-    arrPutItemsParams.push(itemParams);
+    if (tableSuffix == "ALPHA") {
+        arrPutItemsParams.push(itemParams);
+    }
 };
 
 
@@ -161,7 +183,7 @@ localEmitter.on('ready-to-run-putItem', function (itemsparam) {
         if (err) {
             arrErrors.push({err: err, itemsparam: itemsparam});
             console.log('err', err, itemsparam);
-            //throw('check this out');
+            throw('check this out');
         }
         else {
             // console.log('ready-to-run-putItem data', data);
