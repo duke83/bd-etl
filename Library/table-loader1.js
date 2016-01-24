@@ -50,8 +50,10 @@ var arrPutItemsTotalLength = 0;
 var bPutEventsStarted = false;
 var dtStartLoading;
 var waitIteration = 0;
+var counter = 0;
 var IntervalMaster = setInterval(function () {
     var thisDate = new Date();
+    counter++;
     //check to see if arrPutItemsLength is still growing
     var thisLength = arrPutItemsParams.length;
     if (bPutEventsStarted) {
@@ -74,8 +76,9 @@ var IntervalMaster = setInterval(function () {
         dtStartLoading = new Date();
         bPutEventsStarted = true;
         console.log('bPutEventsStarted', bPutEventsStarted);
+        waitIteration = counter;
     }
-    if (waitIteration === 1) {
+    if (counter > 10 && counter === waitIteration + 1) {
         console.log('waiting is over. BEGIN!');
         localEmitter.emit('ready-to-get-next-from-array');
     }
