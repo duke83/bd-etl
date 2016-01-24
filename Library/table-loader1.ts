@@ -54,6 +54,7 @@ var arrPutItemslastLength = 0;
 var arrPutItemsTotalLength = 0;
 var bPutEventsStarted = false;
 var dtStartLoading;
+var waitIteration=0;
 var IntervalMaster = setInterval(function () {
     var thisDate:any = new Date();
     //check to see if arrPutItemsLength is still growing
@@ -82,6 +83,11 @@ var IntervalMaster = setInterval(function () {
         dtStartLoading = new Date();
         bPutEventsStarted = true;
         console.log('bPutEventsStarted', bPutEventsStarted);
+
+    }
+
+    if(waitIteration===1){
+        console.log('waiting is over. BEGIN!')
         localEmitter.emit('ready-to-get-next-from-array');
     }
     arrPutItemslastLength = thisLength;
@@ -202,15 +208,15 @@ localEmitter.on('ready-to-get-next-from-array', function () {
 });
 
 
-var x = { TableName: 'FDIC-2012-12-31-ALPHA',
-Item:
-{ varname: { S: 'inst_webaddr' },
-    ddval: { S: 'http://www.zionsbank.com' },
-    cert: { N: '2270' } } };
-dynamodb.putItem(x,function(err,data){
-    console.log('err',err);
-    console.log('data',data);
-})
+//var x = { TableName: 'FDIC-2012-12-31-ALPHA',
+//Item:
+//{ varname: { S: 'inst_webaddr' },
+//    ddval: { S: 'http://www.zionsbank.com' },
+//    cert: { N: '2270' } } };
+//dynamodb.putItem(x,function(err,data){
+//    console.log('err',err);
+//    console.log('data',data);
+//})
 
 //
 //console.log(x);
