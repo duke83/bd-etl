@@ -173,14 +173,14 @@ localEmitter.on('ready-to-get-next-from-array', function () {
         localEmitter.emit('ready-to-run-putItem', nextItems);
     }
 });
-//var x = {
-//    TableName: 'FDIC-2012-12-31-NUM',
-//    Item: {
-//        varname: {S: 'offfore'},
-//        ddval: {N: '0'},
-//        cert: {N: '18402'}
-//    }
-//};
+var x = { TableName: 'FDIC-2012-12-31-ALPHA',
+    Item: { varname: { S: 'inst_webaddr' },
+        ddval: { S: 'http://www.zionsbank.com' },
+        cert: { N: '2270' } } };
+dynamodb.putItem(x, function (err, data) {
+    console.log('err', err);
+    console.log('data', data);
+});
 //
 //console.log(x);
 //dynamodb.putItem(x, function (err, data) {
