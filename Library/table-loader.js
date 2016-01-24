@@ -44,12 +44,6 @@ var IntervalMaster = setInterval(function () {
     var thisDate = new Date();
     console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate);
     if (arrPutItemsParams.length > 0 && !bPutEventsStarted) {
-        AWS.config.credentials.get(function (err) {
-            if (err)
-                console.log('credentials rtt', err);
-            else
-                console.log('credentials', AWS.config.credentials);
-        });
         console.log('bPutEventsStarted', bPutEventsStarted);
         bPutEventsStarted = true;
         localEmitter.emit('ready-to-get-next-from-array');
