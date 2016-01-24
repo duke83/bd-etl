@@ -211,5 +211,5 @@ localEmitter.on('ready-to-get-next-from-array', function () {
 //    console.log(err);
 //    console.log(data);
 //});
-load('All_Reports_20121231_Bank Assets Sold and Securitized.csv', 'ALPHA');
+load('All_Reports_20121231_Bank Assets Sold and Securitized.csv', 'NUM');
 //# sourceMappingURL=table-loader1.js.map
