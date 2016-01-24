@@ -382,7 +382,7 @@ function deleteTable(tableName:string, cb) {
 }
 
 //var filename = 'All_Reports_20121231_Net+Loans+and+Leases.csv';
-//var tp = new TablePreparer(filename, 1);
+//var tp = new TablePreparer(filename, 15);
 //tp.prepareTables(function (data) {
 //    console.log("preparTables returns:",data)
 //});

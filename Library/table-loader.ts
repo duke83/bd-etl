@@ -9918,18 +9918,18 @@ localEmitter.on('ready-to-get-next-from-array', function () {
 });
 
 
-var x = {
-    TableName: 'FDIC-2013-09-30-NUM',
-    Item: {
-        varname: {S: 'offfor'},
-        ddval: {N: '0'},
-        cert: {N: '18402'}
-    }
-}
-
-console.log(x)
-dynamodb.putItem(x, function (err, data) {
-    console.log(err);
-    console.log(data);
-})
-//load('All_Reports_20130930_Total Debt Securities.csv');
+//var x = {
+//    TableName: 'FDIC-2012-12-31-NUM',
+//    Item: {
+//        varname: {S: 'offfor'},
+//        ddval: {N: '0'},
+//        cert: {N: '18402'}
+//    }
+//}
+//
+//console.log(x)
+//dynamodb.putItem(x, function (err, data) {
+//    console.log(err);
+//    console.log(data);
+//})
+load('All_Reports_20121231_Net+Loans+and+Leases.csv');
