@@ -177,7 +177,7 @@ function pushToItemsArray(tablename, varName, ddval, cert) {
         }
     };
     //console.log('loadFdicRow itemParams', itemParams);
-    if (tableSuffix == "ALPHA") {
+    if (tableSuffix == "NUM") {
         arrPutItemsParams.push(itemParams);
     }
 };
