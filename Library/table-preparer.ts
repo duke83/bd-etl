@@ -377,8 +377,6 @@ function deleteTable(tableName:string, cb) {
         }
         else   cb(null, data);           // successful response
     });
-
-
 }
 
 var filename = 'All_Reports_20121231_Bank Assets Sold and Securitized.csv';

@@ -16,10 +16,14 @@ var EventEmitter = require('events');
 var localEmitter = new EventEmitter();
 
 var filename;
+var numOrAlpha; //due to credential mixups in aws, only write to one table at a time
 var callerEmitter;
 var tablename_alpha;
 var tablename_numeric;
-var arrPutItemsParams = [];//create an array for a flat process to iterate
+var arrPutItemsParams=[];
+var arrPutItemsParams_other = [];//create an array for a flat process to iterate
+    //arrPutItemsParams['ALPHA'] = [];//create an array for a flat process to iterate
+    //arrPutItemsParams['NUM'] = [];//create an array for a flat process to iterate
 var arrErrors = [];
 var rowCount_successful = 0;
 var rowCount_fail = 0;
@@ -32,7 +36,8 @@ var rowCount_fail = 0;
 //THIS VERSION IS GOING TO
 //  1) NOT START INSERTING INTO DYNAMODB UNTIL ALL RECORDS ARE RECIEVED FROM S3
 
-export function load(filename, callerEmitterParam?) {
+export function load(filename, numOrAlphaparam, callerEmitterParam?) {
+    numOrAlpha = numOrAlphaparam;
     if (callerEmitterParam) {
         callerEmitter = callerEmitterParam
     } else {
@@ -42,6 +47,7 @@ export function load(filename, callerEmitterParam?) {
             }
         }
     }
+
     var qdate = QDateModule.QDate.getQDateFromFileName(filename);
     tablename_alpha = qdate.tablename_alpha;
     tablename_numeric = qdate.tablename_numeric;
@@ -54,14 +60,18 @@ var arrPutItemslastLength = 0;
 var arrPutItemsTotalLength = 0;
 var bPutEventsStarted = false;
 var dtStartLoading;
-var waitIteration=0;
+var lastFileRecordCount=0;
 var counter=0;
+var fileRecordCounter=0;//
+
 var IntervalMaster = setInterval(function () {
     var thisDate:any = new Date();
-    counter++
-    //check to see if arrPutItemsLength is still growing
+
+    counter++;
+    //check to see if fileRecordCounter is still growing
     var thisLength = arrPutItemsParams.length;
 
+    //LOG STATUS UPDATE (WRITING MODE)
     if (bPutEventsStarted) {
         var totalElapsedseconds:number = (thisDate - dtStartLoading) / 1000;
         var totalRecordsInserted = arrPutItemsTotalLength - thisLength;
@@ -75,30 +85,35 @@ var IntervalMaster = setInterval(function () {
         )
     }
 
+    //LOG STATUS UPDATE (FILLING MODE)
     if(!bPutEventsStarted) {
         console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
     }
 
-    if (arrPutItemslastLength == thisLength && !bPutEventsStarted) {
+    //IF NO MORE RECORDS HAVE BEEN READ FROM S3 SINCE LAST ITERATION,
+    //START THE WRITING MODE
+    //console.log('fileRecordCounter',fileRecordCounter,'lastFileRecordCount',lastFileRecordCount);
+    if (fileRecordCounter>0 &&  (fileRecordCounter == lastFileRecordCount) && !bPutEventsStarted) {
         //kick of dynamodb load only after array has stopped growing
         arrPutItemsTotalLength = arrPutItemslastLength;
         dtStartLoading = new Date();
         bPutEventsStarted = true;
-        console.log('bPutEventsStarted', bPutEventsStarted);
-        waitIteration=counter
-    }
-
-    if(counter>10 && counter===waitIteration+1){
         console.log('waiting is over. BEGIN!')
         localEmitter.emit('ready-to-get-next-from-array');
+        console.log('bPutEventsStarted', bPutEventsStarted);
     }
+
+   // PREPARE VARIABLES FOR NEXT ITERATION
     arrPutItemslastLength = thisLength;
+    lastFileRecordCount = fileRecordCounter;
 
-
+    //NO MORE RECORDS TO WRITE --> END
     if (arrPutItemsParams.length == 0) {
         console.log('arrPutItems is empty. Goodbye.', arrErrors.length, arrErrors)
         clearInterval(IntervalMaster);
     }
+
+    //IR ERRORS, STOPE INTERVAL AND WRITE TO LOG
     if (arrErrors.length > 0) {
         console.log('there were some errors', arrErrors.length, arrErrors)
         clearInterval(IntervalMaster);
@@ -177,9 +192,14 @@ function pushToItemsArray(tablename, varName, ddval, cert) {
         }
     };
     //console.log('loadFdicRow itemParams', itemParams);
-    if (tableSuffix == "NUM") {
+    if (tableSuffix == numOrAlpha) {
         arrPutItemsParams.push(itemParams);
     }
+    else
+    {
+        arrPutItemsParams_other.push(itemParams);
+    }
+    fileRecordCounter++;
 };
 
 
@@ -227,4 +247,4 @@ localEmitter.on('ready-to-get-next-from-array', function () {
 //    console.log(data);
 //});
 
-load('All_Reports_20121231_Bank Assets Sold and Securitized.csv');
+load('All_Reports_20121231_Bank Assets Sold and Securitized.csv','ALPHA');
