@@ -9927,9 +9927,9 @@ var x = {
     }
 }
 
-//console.log(x)
-//dynamodb.putItem(x, function (err, data) {
-//    console.log(err);
-//    console.log(data);
-//})
-load('All_Reports_20130930_Total Debt Securities.csv');
+console.log(x)
+dynamodb.putItem(x, function (err, data) {
+    console.log(err);
+    console.log(data);
+})
+//load('All_Reports_20130930_Total Debt Securities.csv');
