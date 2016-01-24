@@ -50,7 +50,7 @@ var IntervalMaster = setInterval(function () {
     console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
 
     if(arrPutItemsParams.length > 0 && !bPutEventsStarted){
-       
+
         console.log('bPutEventsStarted',bPutEventsStarted);
         bPutEventsStarted=true;
         localEmitter.emit('ready-to-get-next-from-array');
