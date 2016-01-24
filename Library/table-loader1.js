@@ -103,7 +103,8 @@ localEmitter.on('row-parsed-from-s3-file', function (row) {
     if (glossaryItem.AON == 'alpha' && row.Value == '') {
         val = 'ddEmpty';
     }
-    pushToItemsArray(glossaryItem.AON == 'numeric' ? tablename_numeric : tablename_alpha, row.VarName, val, row.cert);
+    var varName = row.VarName.replace('.', '_'); //'inst.webaddr' is an invalid attribute name in dynamodb
+    pushToItemsArray(glossaryItem.AON == 'numeric' ? tablename_numeric : tablename_alpha, varName, val, row.cert);
 });
 function getVarName(vname) {
     if (vname === 'name') {

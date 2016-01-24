@@ -326,11 +326,11 @@ function deleteTable(tableName, cb) {
             cb(null, data); // successful response
     });
 }
-//var filename = 'All_Reports_20121231_Net+Loans+and+Leases.csv';
-//var tp = new TablePreparer(filename, 15);
-//tp.prepareTables(function (data) {
-//    console.log("preparTables returns:",data)
-//});
+var filename = 'All_Reports_20121231_Bank Assets Sold and Securitized.csv';
+var tp = new TablePreparer(filename, 75);
+tp.prepareTables(function (data) {
+    console.log("preparTables returns:", data);
+});
 //TableBuilder.updateThroughputCapacity("FDIC-2012-12-31-NUM",1,1);
-//deleteTables(); 
+deleteTables();
 //# sourceMappingURL=table-preparer.js.map

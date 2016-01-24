@@ -4,7 +4,7 @@ import * as QDateModule from './QDate'
 var config = require("./config.js");
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3({s3ForcePathStyle: true});
-var getGlossaryItemByVarName=require('./getGlossaryItemByVarName.js')
+var getGlossaryItemByVarName = require('./getGlossaryItemByVarName.js')
 var csv = require('csv/lib');
 
 var dynamodb = new AWS.DynamoDB(config.dynamodbConfig());
@@ -49,28 +49,29 @@ export function load(filename, callerEmitterParam?) {
 
     localEmitter.emit('start', filename)
 }
-var bS3LoadComplete=false;
-var arrPutItemslastLength=0;
-var bPutEventsStarted=false;
+var bS3LoadComplete = false;
+var arrPutItemslastLength = 0;
+var bPutEventsStarted = false;
 var IntervalMaster = setInterval(function () {
     var thisDate = new Date();
     console.log('intervalMaster - arrPutItemsParams.length', arrPutItemsParams.length, thisDate)
 
     //check to see if arrPutItemsLength is still growing
     var thisLength = arrPutItemsParams.length;
-    if(arrPutItemslastLength==thisLength && !bPutEventsStarted){
+    if (arrPutItemslastLength == thisLength && !bPutEventsStarted) {
         //kick of dynamodb load only after array has stopped growing
-        bPutEventsStarted=true;
-        console.log('bPutEventsStarted',bPutEventsStarted);
+        bPutEventsStarted = true;
+        console.log('bPutEventsStarted', bPutEventsStarted);
         localEmitter.emit('ready-to-get-next-from-array');
     }
-    arrPutItemslastLength=thisLength;
+    arrPutItemslastLength = thisLength;
 
 
     if (arrPutItemsParams.length == 0) {
         console.log('arrPutItems is empty. Goodbye.', arrErrors.length, arrErrors)
         clearInterval(IntervalMaster);
-    } if (arrErrors.length > 0) {
+    }
+    if (arrErrors.length > 0) {
         console.log('there were some errors', arrErrors.length, arrErrors)
         clearInterval(IntervalMaster);
     }
@@ -114,8 +115,9 @@ localEmitter.on('row-parsed-from-s3-file', function (row) {
     if (glossaryItem.AON == 'alpha' && row.Value == '') {
         val = 'ddEmpty'
     }
+    var varName = row.VarName.replace('.', '_'); //'inst.webaddr' is an invalid attribute name in dynamodb
     pushToItemsArray(glossaryItem.AON == 'numeric' ? tablename_numeric : tablename_alpha,
-        row.VarName, val, row.cert);
+        varName, val, row.cert);
 });
 
 
@@ -148,7 +150,6 @@ function pushToItemsArray(tablename, varName, ddval, cert) {
     };
     //console.log('loadFdicRow itemParams', itemParams);
     arrPutItemsParams.push(itemParams);
-
 };
 
 
